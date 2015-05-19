@@ -13,6 +13,7 @@
 #include "../class/Rebuilder.h"
 #include "../class/RebuilderAverage.h"
 #include "../class/RebuilderAverageOptimized.h"
+#include "../class/RebuilderRamanBabu2001.h"
 
 class RebuilderCreator{
 	
@@ -28,6 +29,9 @@ public:
 		}
 		if(!fp.compare(AVERAGE_OPT_RBD)){
 			return new RebuilderAverageOptimized();
+		}
+		if(!fp.compare(AVERAGE_RAMANBABU2001)){
+			return new RebuilderRamanBabu2001();
 		}
 		return NULL;
 	}

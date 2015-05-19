@@ -23,6 +23,7 @@
 #define REBUILDER_METHOD "-rebuilder-method"
 	#define AVERAGE_RBD "rebuilder-average"
 	#define AVERAGE_OPT_RBD "rebuilder-average-opt"
+	#define AVERAGE_RAMANBABU2001 "rebuilder-ramanbabu2001"
 
 #define METRIC "-metric"
    #define METRIC_PSNR "metric-psnr"
