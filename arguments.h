@@ -22,6 +22,7 @@
 
 #define REBUILDER_METHOD "-rebuilder-method"
 	#define AVERAGE_RBD "rebuilder-average"
+	#define AVERAGE_PIXEL_RBD "rebuilder-average-pixel"
 	#define AVERAGE_OPT_RBD "rebuilder-average-opt"
 
 #define METRIC "-metric"
