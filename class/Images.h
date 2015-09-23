@@ -56,7 +56,7 @@ public:
 	    	for (int j = 0; j < w/wblock; j=j+1)
 	    	{	
 	    		int pos = (i*(int)(h/hblock))+j;
-	    		if(list.at(pos)!=NULL){
+	    		if(list.at(pos)!=NULL && list.at(pos)->isValid()){
 			   		vector<Pixel> *e = (vector<Pixel>*)list.at(pos)->getExtras();
 			    	vector<Pixel> lblock(wblock*hblock);
 			    	for(int k=0;k<(wblock*hblock);k++){
@@ -81,6 +81,7 @@ public:
 	    }
 	    if(show_data)
 	    	cout << "Image Generated...\n";
+	    printf("SIZE: %lu \n", list.size());
     }
 
 	Images(string url, int nwblock, int nhblock, bool show_data){

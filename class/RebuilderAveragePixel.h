@@ -36,12 +36,14 @@ public:
 	* @param img Imagen sobre la que se le aplicará el método de ocultamiento de errores
 	*
 	*/
-		vector<DataType *> matrix = old_img->toList();
-		Images* img = new Images(matrix, old_img->getType(), old_img->getWidth(), old_img->getHeight(), 1, 1, false);
+		vector<DataType *> list = old_img->toList();
+		Images* img = new Images(list, old_img->getType(), old_img->getWidth(), old_img->getHeight(), 1, 1, false);
+		img->save("result.bmp");
 		int amount_channels = img->getType();
 		int count;
 		int w = img->getWidth()/img->getWidthBlock();
 		int h = img->getHeight()/img->getHeightBlock();
+		DataBlock** matrix = img->getMatrix();
 		do{
 			for(int i = 0; i < h; i=i+1)    
 			{
@@ -80,15 +82,13 @@ public:
 	                		matrix[i][j]= *db;
 	                    }
 	                }
-	                else{
-
-	                }
 	            }
 	        }
 	    }while(isLossBlock(img));
 	    if(show_data)
 	    	cout << "The Image has been restored\n";
-	    old_img = new Image(img->toList(), old_img->getType(), old_img->getWidth(), old_img->getHeight(), old_img->getWidthBlock(), old_img->getHeightBlock(), false)
+	    Images* final_img = new Images(img->toList(), old_img->getType(), old_img->getWidth(), old_img->getHeight(), old_img->getWidthBlock(), old_img->getHeightBlock(), false);
+	    old_img = final_img;
 	}
 
 private:
