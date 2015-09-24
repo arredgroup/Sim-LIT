@@ -30,20 +30,18 @@ public:
 
 	~RebuilderAveragePixel(){};
 
-	virtual void hidden(Images* old_img, bool show_data){
+	virtual void hidden(Images* img, bool show_data){
 	/** 
 	* @brief Método que oculta los pixeles dañados y los reemplaza por el promedio de sus vecinos más cercanos
 	* @param img Imagen sobre la que se le aplicará el método de ocultamiento de errores
 	*
 	*/
-		vector<DataType *> list = old_img->toList();
-		Images* img = new Images(list, old_img->getType(), old_img->getWidth(), old_img->getHeight(), 1, 1, false);
-		img->save("result.bmp");
+		img->clearBlocks();
+		DataBlock** matrix = img->getMatrix();
 		int amount_channels = img->getType();
 		int count;
 		int w = img->getWidth()/img->getWidthBlock();
 		int h = img->getHeight()/img->getHeightBlock();
-		DataBlock** matrix = img->getMatrix();
 		do{
 			for(int i = 0; i < h; i=i+1)    
 			{
@@ -87,8 +85,6 @@ public:
 	    }while(isLossBlock(img));
 	    if(show_data)
 	    	cout << "The Image has been restored\n";
-	    Images* final_img = new Images(img->toList(), old_img->getType(), old_img->getWidth(), old_img->getHeight(), old_img->getWidthBlock(), old_img->getHeightBlock(), false);
-	    old_img = final_img;
 	}
 
 private:

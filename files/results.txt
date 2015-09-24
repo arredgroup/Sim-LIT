@@ -49,4 +49,6 @@ src/4.bmp	% Pkg-Lost: 3.84615	% Block-Lost: 2.34375	PSNR: 43.7366
 3.jpg	% Pkg-Lost: 9.76562	% Block-Lost: 9.76562	PSNR: 34.0027	PSNR: 34.0027	
 3.jpg	% Pkg-Lost: 7.32064	% Block-Lost: 7.32422	PSNR: 35.8061	
 2.jpg	% Pkg-Lost: 54	% Block-Lost: 54	PSNR: 20.11	
-2222222222222222
+222222222222222222222222222222222.jpg	% Pkg-Lost: 54	% Block-Lost: 54	PSNR: 7.39213	
+2.jpg	% Pkg-Lost: 54	% Block-Lost: 54	PSNR: 12.8817	
+2.jpg	% Pkg-Lost: 54	% Block-Lost: 54	PSNR: 16.0901	

@@ -32,6 +32,10 @@ private:
 public:
     ~Images(){}
 
+    Images(){
+
+    }
+
     Images(vector<DataType *> list, int nType, int nwidth, int nheight, int nwblock, int nhblock, bool show_data){
     /*
 	*  @brief Método Constructor de la Clase Images
@@ -56,6 +60,7 @@ public:
 	    	for (int j = 0; j < w/wblock; j=j+1)
 	    	{	
 	    		int pos = (i*(int)(h/hblock))+j;
+	    		//printf("I: %d\tJ: %d\tPOS: %d\n",i,j,pos);
 	    		if(list.at(pos)!=NULL && list.at(pos)->isValid()){
 			   		vector<Pixel> *e = (vector<Pixel>*)list.at(pos)->getExtras();
 			    	vector<Pixel> lblock(wblock*hblock);
@@ -81,7 +86,6 @@ public:
 	    }
 	    if(show_data)
 	    	cout << "Image Generated...\n";
-	    printf("SIZE: %lu \n", list.size());
     }
 
 	Images(string url, int nwblock, int nhblock, bool show_data){
@@ -216,7 +220,46 @@ public:
 			}
 		}
 		img.normalize(0, 255);
+
 		img.save(destiny);
+	}
+
+	void clearBlocks(){
+		DataBlock** newMatrix;
+		newMatrix = new DataBlock*[h*hblock];
+	    for (int i = 0; i < h*hblock; i=i+1){
+	    	newMatrix[i] = new DataBlock[w*wblock];
+	    }
+		for (int i = 0; i < h/hblock; i++){
+			for (int j = 0; j < w/wblock; j++){	
+				if(matrix[i][j].isValid()){
+					vector<Pixel> *e = (vector<Pixel>*)matrix[i][j].getExtras();
+					for(int r=0;r<hblock;r++){
+						for(int c=0;c<wblock;c++){
+							vector<int> v_rgb = (e->at((r*hblock)+c)).getChannels();
+							vector<int> rgb;
+							for(int x=0;x<v_rgb.size();x++){
+								rgb.push_back(v_rgb[x]);
+							}
+							DataBlock * px = new DataBlock(type, rgb,1,1);
+							newMatrix[(i*hblock)+r][(j*wblock)+c] = *px;
+						}
+					}
+				}
+			}
+		}
+		matrix = newMatrix;
+		hblock = 1;
+		wblock = 1;
+	}
+
+	void setAllValues(DataBlock** nMatrix, int nh, int nw, int nhblock, int nwblock, int ntype){
+		h=nh;
+		w=nw;
+		hblock=nhblock;
+		wblock=nwblock;
+		type=ntype;
+		matrix=nMatrix;
 	}
 
 private:

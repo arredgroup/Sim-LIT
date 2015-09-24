@@ -70,7 +70,8 @@ public:
 		this->setValid(false);
 	}
 
-	~DataBlock(){}
+	~DataBlock(){
+	}
 
 	double getSize(){
 	/*
