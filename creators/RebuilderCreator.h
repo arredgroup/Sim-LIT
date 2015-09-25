@@ -12,6 +12,7 @@
 
 #include "../class/Rebuilder.h"
 #include "../class/RebuilderAverage.h"
+#include "../class/RebuilderAveragePixel.h"
 #include "../class/RebuilderAverageOptimized.h"
 #include "../class/RebuilderRamanBabu2001.h"
 
@@ -26,6 +27,8 @@ public:
 	*/
 		if(!fp.compare(AVERAGE_RBD)){
 			return new RebuilderAverage();
+		}if(!fp.compare(AVERAGE_PIXEL_RBD)){
+			return new RebuilderAveragePixel();
 		}
 		if(!fp.compare(AVERAGE_OPT_RBD)){
 			return new RebuilderAverageOptimized();
