@@ -24,6 +24,7 @@
 	#define AVERAGE_RBD "rebuilder-average"
 	#define AVERAGE_PIXEL_RBD "rebuilder-average-pixel"
 	#define AVERAGE_OPT_RBD "rebuilder-average-opt"
+	#define AVERAGE_RAMANBABU2001 "rebuilder-ramanbabu2001"
 
 #define METRIC "-metric"
    #define METRIC_PSNR "metric-psnr"
