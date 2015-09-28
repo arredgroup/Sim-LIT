@@ -33,8 +33,10 @@ public:
 	   @return psnr
 	*/
 		double mse, psnr, del;
-		rcv.clearBlocks();
-		org.clearBlocks();
+		if(rcv.getWidthBlock()!=org.getWidthBlock() || rcv.getHeightBlock()!=org.getHeightBlock()){
+			rcv.clearBlocks();
+			org.clearBlocks();
+		}
 	    mse = 0;
 	    int h = org.getHeight()/org.getHeightBlock();
 	    int w = org.getWidth()/org.getWidthBlock();

@@ -14,7 +14,6 @@
 #include "../class/TorusMixer.h"
 #include "../class/TurnerMixer.h"
 #include "../class/DsjalMixer.h"
-#include "../class/ColorCompressor.h"
 #include <string>
 #include <cstring>
 #include <cstdio>
@@ -36,9 +35,6 @@ static ForwardProcessing* create(string fp){
 	}
 	if(!fp.compare(DSJAL_MIX)){
 		return new DsjalMixer();
-	}
-	if(!fp.compare(COLOR_COMPRESSOR)){
-		return new ColorCompressor();
 	}
 	return NULL;
 }
