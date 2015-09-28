@@ -45,8 +45,8 @@ public:
 		ofstream file;
         //string format = ".txt";
         //string path = "files/torus" + /*this->get() +*/ format;
-		int n = parameters[0];
-		int k = parameters[1];
+		int n = parameters[1];
+		int k = parameters[0];
 		unsigned int M[2][2], TorusMatrice[2][2];
 
 	    // Inicialización de la matriz con sus variables
