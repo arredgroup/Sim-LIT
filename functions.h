@@ -38,14 +38,14 @@ void readArguments(int n, char const *args[]){
 			else
 				i=i+1;
 		}
-		if(!argument.compare(WORK_DIR)){
+/*		if(!argument.compare(WORK_DIR)){
 			if((i+1)<n && args[i+1][0]!='-'){
 				folder = args[i+1];
 				i+=2;
 			}
 			else
 				i=i+1;
-		}
+		}*/
 		if(!argument.compare(FORWARD_METHOD)){
 			if((i+1)<n && args[i+1][0]!='-' && isNumber(args[i+1][0])){
 				i=i+1;
@@ -191,9 +191,18 @@ void readArguments(int n, char const *args[]){
 			show_data=true;
 			i=i+1;
 		}
-		if(!argument.compare(EXPORT_FILES)){
-			export_files=true;
+		if(!argument.compare(EXPORT_IMAGES)){
+			export_images=true;
 			i=i+1;
+		}
+		if(!argument.compare(EXPORT_FILES)){
+			if((i+1)<n && args[i+1][0]!='-'){
+				export_files=true;
+				result_name = args[i+1];
+				i=i+2;
+			}
+			else
+				i=i+1;
 		} 
 	}
 	if(pktz==NULL)

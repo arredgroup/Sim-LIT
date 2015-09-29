@@ -8,7 +8,6 @@
 #include "class/TorusMixer.h"
 #include "class/TurnerMixer.h"
 #include "class/DsjalMixer.h"
-#include "class/ColorCompressor.h"
 #include "class/Package.h"
 #include "class/NormalPacketizer.h"
 #include "class/RandomGenerator.h"

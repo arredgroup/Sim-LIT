@@ -19,10 +19,12 @@
 /*-----------VARIABLES DEL SISTEMA---------------*/
 /* Estas variables son las que hacen que el software funcione por defecto*/
 string src="lena.jpg";
-string folder="";
-string folder_result="images/";
+string folder_result="";
+string folder_images="";
+string result_name="result.txt";
 bool show_data=false;
 bool export_files=false;
+bool export_images=false;
 int wblock=1, hblock=1, package_size=27;
 vector<ForwardProcessing *> fp;
 vector<int> fp_narguments;
@@ -44,7 +46,7 @@ using namespace std;
 	{
 		readArguments(argc,argv);
 		if(export_files){
-			file.open("files/results.txt",ios::app);
+			file.open(result_name,ios::app);
 			file << src << "\t";
 		}
 		if(show_data)
@@ -81,9 +83,9 @@ using namespace std;
 			file << "\% Block-Lost: " << 100-((nepkgf*100)/nepkgo) << "\t";
 		}
 
-		if(export_files){
+		if(export_images){
 			Images aux(pkgs_rcved,img.getType(),img.getWidth(),img.getHeight(),img.getWidthBlock(),img.getHeightBlock(),show_data);
-			string path = folder_result+"image_received_mixed.bmp";
+			string path = folder_images+"image_received_forwared.bmp";
 			aux.save(path.c_str());
 		}
 		for (int i = fp.size()-1; i>=0; i=i-1)
@@ -91,13 +93,13 @@ using namespace std;
 			fp[i]->unmake(&pkgs_rcved,show_data);
 		}
 		Images received(pkgs_rcved,img.getType(),img.getWidth(),img.getHeight(),img.getWidthBlock(),img.getHeightBlock(),show_data);
-		if(export_files){
-			string path = folder_result+"image_received_unmixed.bmp";
+		if(export_images){
+			string path = folder_images+"image_received_unforwared.bmp";
 			received.save(path.c_str());
 		}
 		rbd->hidden(&received,show_data);
-		if(export_files){
-			string path = folder_result+"image_received_rebuilded.bmp";
+		if(export_images){
+			string path = folder_images+"image_received_rebuilded.bmp";
 			received.save(path.c_str());
 		}
 		for (int i = 0; i < metrics.size(); i=i+1)

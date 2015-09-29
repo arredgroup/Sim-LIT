@@ -1,17 +1,17 @@
 
-#define WORK_DIR "-images-folder" 
+//#define WORK_DIR "-images-folder" 
 #define IMAGE_NAME "-image-name" 
 #define WIDTH_BLOCK "-width-block" 
 #define HEIGHT_BLOCK "-height-block"
 #define FOLDER_RESULT "-folder-result"
 #define EXPORT_FILES "-export-files"
+#define EXPORT_IMAGES "-export-images"
 #define SHOW_DATA_SCREEN "-show-data-screen"
 
 #define FORWARD_METHOD "-forward-method"
 	#define TORUS_MIX "torus-mixer" 
 	#define TURNER_MIX "turner-mixer"
 	#define DSJAL_MIX "dsjal-mixer"
-	#define COLOR_COMPRESSOR "color-compressor"
 
 #define PACKETIZER_METHOD "-packetizer-method"
 	#define NORMAL_PAKETIZER "normal-packetizer" 

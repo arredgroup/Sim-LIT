@@ -104,7 +104,7 @@ public:
 		} else {
 			type=img.spectrum();
 		}
-		cout<<"TIPO: "<<type<<"\n";
+		//cout<<"TIPO: "<<type<<"\n";
 	    w = img.width();
 	    h = img.height();
 	    if((w%wblock!=0 || h%hblock!=0) || wblock!=hblock){
@@ -213,6 +213,14 @@ public:
 							for(int x=0;x<v_rgb.size();x++){
 								rgb[x]=v_rgb[x];
 							}
+							img.draw_point((j*wblock)+c,(i*hblock)+r,0,rgb);
+						}
+					}
+				}
+				else{
+					for(int r=0;r<hblock;r++){
+						for(int c=0;c<wblock;c++){
+							int rgb[] = {255,255,255};
 							img.draw_point((j*wblock)+c,(i*hblock)+r,0,rgb);
 						}
 					}
