@@ -65,6 +65,13 @@ using namespace std;
 		//	cout << "The Package Size is minor than the block sizes\n";
 		//	return 0;
 		//}
+
+		if(export_images){
+			Images aux(pkgs_rcved,img.getType(),img.getWidth(),img.getHeight(),img.getWidthBlock(),img.getHeightBlock(),show_data);
+			string path = folder_images+"image_forwared.bmp";
+			aux.save(path.c_str());
+		}
+
 		vector<Package> pkgs = pktz->imgToPackageList(list,package_size,show_data);
 		npkgo = pkgs.size();
 		nepkgo = pktz->getSizeElements();

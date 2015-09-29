@@ -192,9 +192,14 @@ void readArguments(int n, char const *args[]){
 			i=i+1;
 		}
 		if(!argument.compare(EXPORT_IMAGES)){
-			export_images=true;
-			i=i+1;
-		}
+			if((i+1)<n && args[i+1][0]!='-'){
+				export_images=true;
+				folder_images = args[i+1];
+				i=i+2;
+			}
+			else
+				i=i+1;
+		} 
 		if(!argument.compare(EXPORT_FILES)){
 			if((i+1)<n && args[i+1][0]!='-'){
 				export_files=true;
