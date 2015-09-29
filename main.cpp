@@ -67,8 +67,9 @@ using namespace std;
 		//}
 
 		if(export_images){
+			Images aux(list,img.getType(),img.getWidth(),img.getHeight(),img.getWidthBlock(),img.getHeightBlock(),show_data);
 			string path = folder_images+"image_forwared.bmp";
-			img.save(path.c_str());
+			aux.save(path.c_str());
 		}
 
 		vector<Package> pkgs = pktz->imgToPackageList(list,package_size,show_data);
