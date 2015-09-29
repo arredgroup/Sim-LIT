@@ -1,0 +1,1 @@
+./examples/example-loss-file-grayscale-lenna/1.bmp	% Pkg-Lost: 0.329489	% Block-Lost: 0.32959	PSNR: 51.2323	
