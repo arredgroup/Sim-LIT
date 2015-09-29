@@ -46,7 +46,7 @@ using namespace std;
 	{
 		readArguments(argc,argv);
 		if(export_files){
-			file.open(result_name,ios::app);
+			file.open(result_name,std::fstream::in | std::fstream::out | std::fstream::app);
 			file << src << "\t";
 		}
 		if(show_data)
