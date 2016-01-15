@@ -12,6 +12,7 @@
 	#define TORUS_MIX "torus-mixer" 
 	#define TURNER_MIX "turner-mixer"
 	#define DSJAL_MIX "dsjal-mixer"
+	#define FILE_MIX "file-mixer"
 
 #define PACKETIZER_METHOD "-packetizer-method"
 	#define NORMAL_PAKETIZER "normal-packetizer" 

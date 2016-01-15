@@ -7,94 +7,69 @@
 
 **/
 
-#ifndef CLASS_TORUSMIXER
-#define CLASS_TORUSMIXER
+#ifndef CLASS_MIXERFROMFILE
+#define CLASS_MIXERFROMFILE
 
 #include <iostream>
 #include <fstream> 
 #include <sstream>
 #include <string>
-#include "ForwardProcessing.h"
-#include "DataType.h"
+#include "../ForwardProcessing.h"
+#include "../DataType.h"
 
 using namespace std;
 
-class TorusMixer: public ForwardProcessing{
+class MixerFromFile: public ForwardProcessing{
 
 	int proceed; //!<@brief Variable que indica si el método se realizó correctamente o no
 
 
 public:
 
-	TorusMixer(){}
+	MixerFromFile(){}
 
-	~TorusMixer(){}
+	~MixerFromFile(){}
 
 	int make(vector<DataType *> *list, int width, int height, vector<int> parameters, int nParameters, bool show_data){
 	/**
-	 * @brief Método aplica el entrelazamiento utilizando el Algoritmo Torus Automorphisms
+	 * @brief Método aplica el entrelazamiento utilizando el un Archivo con la secuencia de mezcla
 	 * @param list Vector del tipo DataType que contiene la lista que se desea comprimir
 	 * @param width Cantidad de Columnas que tiene la representación de la Imagen
 	 * @param height Cantidad de Filas que tiene la representación de la Imagen
 	 * @param parameters parámetros que requiere el compresor para funcionar
 	 */
-		if(nParameters!=2)
-			return 1; //ERROR POR CANTIDAD DE PARÁMETROS, SE REQUIEREN SOLO 2 PARA FUNCIONAR
-		if(width!=height)
-			return 2; //ERROR IMAGEN NO CUADRADA
-		ofstream file;
-        //string format = ".txt";
-        //string path = "files/torus" + /*this->get() +*/ format;
-		int n = parameters[1];
-		int k = parameters[0];
-		unsigned int M[2][2], TorusMatrice[2][2];
-
-	    // Inicialización de la matriz con sus variables
-	    TorusMatrice[0][0] = 1;
-	    TorusMatrice[0][1] = 1;
-	    TorusMatrice[1][0] = k;
-	    TorusMatrice[1][1] = k+1;
-
-	    // Procedimiento matemático
-	    for(int count=1; count < n; count++)
-	    {
-	        M[0][0]=(TorusMatrice[0][0]+TorusMatrice[0][1]*k)%width;
-	        M[0][1]=(TorusMatrice[0][0]+TorusMatrice[0][1]*(k+1))%width;
-	        M[1][0]=(TorusMatrice[1][0]+TorusMatrice[1][1]*k)%width;
-	        M[1][1]=(TorusMatrice[1][0]+TorusMatrice[1][1]*(k+1))%width;
-
-	        TorusMatrice[0][0] = M[0][0];
-	        TorusMatrice[0][1] = M[0][1];
-	        TorusMatrice[1][0] = M[1][0];
-	        TorusMatrice[1][1] = M[1][1];
-	    }
-
-	    if(n)
-	    {
-			file.open("files/torus.txt",ofstream::out| ofstream::trunc);
-			if(file.is_open()){
-				file << width*height << "\n";
-		        for(int i = 0; i < width; i++)
-		            for(int j = 0; j < width; j++)
-		               {
-		                	int iPos = ((i*width)+j);
-		                    int ip = (TorusMatrice[0][0]*i + TorusMatrice[0][1]*j)%width;
-		                    int jp = (TorusMatrice[1][0]*i + TorusMatrice[1][1]*j)%width;
-		                	int fPos = ((ip*width)+jp);
-		                    DataType * aux = list->at(fPos);
-		                    list->at(fPos)=list->at(iPos);
-		                    list->at(iPos)=aux;
-		                    file << iPos << "-" << fPos << "\n";
-		                }
-		        if(show_data)
-		    		cout << "Torus Automorphisms Applied to Image\n";
-		    	proceed=true;
-		    	//this->set(1);
+	 	if(nParameters!=1)
+	 		return 2;
+	 	if(parameters.size()!=1)
+	 		return 3;
+	 	char str[3];
+		sprintf(str, "%d", parameters.at(0));
+		ifstream read;
+		ofstream save;
+		string line;
+        string path = "class/MixerFromFile/"+ string(str) +".mixer";
+		read.open(path.c_str());
+		save.open("files/mff.txt",ofstream::out| ofstream::trunc);
+		if(save.is_open() && read.is_open()){
+			save << list->size() << "\n";
+			getline(read, line);
+			vector<string> v = explode(line, ' ');
+	        for(int i = 0; i < list->size() && i < v.size(); i++){
+		        int iPos = i;
+		        int fPos = atoi(v.at(i).c_str());
+		        DataType * aux = list->at(fPos);
+		        list->at(fPos)=list->at(iPos);
+		        list->at(iPos)=aux;
+		        save << iPos << "-" << fPos << "\n";
 		    }
-	    	file.close();
-	    	return 0;
-	    }
-	    return 3;
+		    if(show_data)
+		    	cout << "Mixer From File Applied to Image\n";
+		    proceed=true;
+		    	//this->set(1);
+		}
+	    save.close();
+	    read.close();
+	    return 0;
 	}
 
 	int unmake(vector<DataType *> *list, bool show_data){
@@ -106,7 +81,7 @@ public:
 			ifstream file;
 			string line, delimiter="-";
 			int iPos, fPos;
-        	string path = "files/torus.txt";
+        	string path = "files/mff.txt";
 			file.open(path.c_str());
 			if(file.is_open()){
 				getline(file, line);
@@ -133,12 +108,27 @@ public:
 			        list->at(iPos)=aux;
 				}
 		        if(show_data)
-			    	cout << "Torus Automorphisms undo to Image\n";
+			    	cout << "Mixer From File undo to Image\n";
 				file.close();
 				proceed=false;
 			}
 		}
 		return 0;
+	}
+
+private:
+
+	std::vector<std::string> explode(std::string const & s, char delim)
+	{
+	    std::vector<std::string> result;
+	    std::istringstream iss(s);
+
+	    for (std::string token; std::getline(iss, token, delim); )
+	    {
+	        result.push_back(std::move(token));
+	    }
+
+	    return result;
 	}
 
 };

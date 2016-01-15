@@ -14,6 +14,7 @@
 #include "../class/TorusMixer.h"
 #include "../class/TurnerMixer.h"
 #include "../class/DsjalMixer.h"
+#include "../class/MixerFromFile/MixerFromFile.h"
 #include <string>
 #include <cstring>
 #include <cstdio>
@@ -35,6 +36,9 @@ static ForwardProcessing* create(string fp){
 	}
 	if(!fp.compare(DSJAL_MIX)){
 		return new DsjalMixer();
+	}
+	if(!fp.compare(FILE_MIX)){
+		return new MixerFromFile();
 	}
 	return NULL;
 }
