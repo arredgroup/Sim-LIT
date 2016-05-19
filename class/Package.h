@@ -35,6 +35,11 @@ public:
 		size=nSize;
 		ID=id;
 	}
+
+	Package(){
+		ID=-1;
+		size=0;
+	}
 	
 	~Package(){}
 

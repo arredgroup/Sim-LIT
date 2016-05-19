@@ -15,6 +15,7 @@
 #include "CImg.h"
 #include <cstddef>
 #include <vector>
+#include "../structs.h"
 
 using namespace std;
 using namespace cimg_library; 
@@ -36,7 +37,7 @@ public:
 
     }
 
-    Images(vector<DataType *> list, int nType, int nwidth, int nheight, int nwblock, int nhblock, bool show_data){
+    Images(vector<DataType *> list, HEAD *header, bool show_data){
     /*
 	*  @brief Método Constructor de la Clase Images
 	*  @param list Lista de Elementos con los cuales se creará la nueva Imagen
@@ -44,14 +45,16 @@ public:
 	*  @param nwidth Cantidad de Columnas que tendrá la nueva imagen
 	*  @param nheight Cantidad de Filas que tendrá la nueva imagen
 	*/
-    	type=nType;
-    	w=nwidth;
-    	h=nheight;
-    	wblock=nwblock;
-		hblock=nhblock; 
+    	type=header->chnls;
+    	w=header->w;
+    	h=header->h;
+    	wblock=header->wb;
+		hblock=header->hb; 
 		if((w%wblock!=0 || h%hblock!=0) || wblock!=hblock){
 			wblock=1;
+			header->wb=1;
     		hblock=1;
+    		header->hb=1;
     	}
 	    matrix = new DataBlock*[h/hblock];
 	    for (int i = 0; i < h/hblock; i=i+1)
@@ -88,13 +91,13 @@ public:
 	    	cout << "Image Generated...\n";
     }
 
-	Images(string url, int nwblock, int nhblock, bool show_data){
+	Images(string url, HEAD *header, bool show_data){
 		/*
 		* @brief Método Constructor de la clase Images
 		* @param url Fuente de origen desde donde se importará la Imagen
 		*/
-		wblock=nwblock;
-		hblock=nhblock;
+		wblock=header->wb;
+		hblock=header->hb;
 		CImg<> img(url.c_str());
 		const CImg<unsigned char> R = img.get_shared_channel(0),
                         	  	G = img.get_shared_channel(1),
@@ -104,12 +107,17 @@ public:
 		} else {
 			type=img.spectrum();
 		}
+		header->chnls=type;
 		//cout<<"TIPO: "<<type<<"\n";
 	    w = img.width();
 	    h = img.height();
+	    header->w=w;
+	    header->h=h;
 	    if((w%wblock!=0 || h%hblock!=0) || wblock!=hblock){
 	    	wblock=1;
+	    	header->wb=1;
 	    	hblock=1;
+	    	header->hb=1;
 	    }
 	    //cout << "W:"<<w<<"---"<<"H:"<<h<<"\n";
 	    matrix = new DataBlock*[(int)h/hblock];
@@ -232,11 +240,11 @@ public:
 		img.save(destiny);
 	}
 
-	void clearBlocks(){
+	void clearBlocks(HEAD *header){
 		DataBlock** newMatrix;
-		newMatrix = new DataBlock*[h*hblock];
-	    for (int i = 0; i < h*hblock; i=i+1){
-	    	newMatrix[i] = new DataBlock[w*wblock];
+		newMatrix = new DataBlock*[h];
+	    for (int i = 0; i < h; i=i+1){
+	    	newMatrix[i] = new DataBlock[w];
 	    }
 		for (int i = 0; i < h/hblock; i++){
 			for (int j = 0; j < w/wblock; j++){	
@@ -259,6 +267,8 @@ public:
 		matrix = newMatrix;
 		hblock = 1;
 		wblock = 1;
+		header->hb=hblock;
+		header->wb=wblock;
 	}
 
 	void setAllValues(DataBlock** nMatrix, int nh, int nw, int nhblock, int nwblock, int ntype){
@@ -268,6 +278,14 @@ public:
 		wblock=nwblock;
 		type=ntype;
 		matrix=nMatrix;
+	}
+
+	void destroy(){
+		for( int i = 0 ; i < h/hblock ; i++ )
+	    {
+	        delete [] matrix[i];
+	    }
+	    delete [] matrix;
 	}
 
 private:

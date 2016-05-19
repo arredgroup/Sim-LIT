@@ -10,8 +10,9 @@
 #ifndef CLASS_PACKETIZERCREATOR
 #define CLASS_PACKETIZERCREATOR
 
-#include "../class/Packetizer.h"
-#include "../class/NormalPacketizer.h"
+#include "../class/Packetizer/Packetizer.h"
+#include "../class/Packetizer/NormalPacketizer.h"
+#include "../class/Packetizer/FilePacketizer.h"
 
 #include <string>
 #include <cstring>
@@ -26,8 +27,11 @@ static Packetizer* create(string fp){
 	*  @brief Método que crea un determinado Packetizer
 	*  @param fp Nombre del Packetizer que será creado
 	*/
-	if(!fp.compare(NORMAL_PAKETIZER)){
+	if(!fp.compare(NORMAL_PACKETIZER)){
 		return new NormalPacketizer();
+	}
+	if(!fp.compare(FILE_PACKETIZER)){
+		return new FilePacketizer();
 	}
 	return NULL;
 }

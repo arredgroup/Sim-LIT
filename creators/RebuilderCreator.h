@@ -10,11 +10,11 @@
 #ifndef CLASS_REBUILDERCREATOR
 #define CLASS_REBUILDERCREATOR
 
-#include "../class/Rebuilder.h"
-#include "../class/RebuilderAverage.h"
-#include "../class/RebuilderAveragePixel.h"
-#include "../class/RebuilderAverageOptimized.h"
-#include "../class/RebuilderRamanBabu2001.h"
+#include "../class/Rebuilder/Rebuilder.h"
+#include "../class/Rebuilder/RebuilderAverage.h"
+#include "../class/Rebuilder/RebuilderAveragePixel.h"
+#include "../class/Rebuilder/RebuilderAverageOptimized.h"
+#include "../class/Rebuilder/RebuilderRamanBabu2001.h"
 
 class RebuilderCreator{
 	

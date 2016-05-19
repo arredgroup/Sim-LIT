@@ -91,7 +91,7 @@ public:
 	* @brief Función que devuelve en un arreglo de enteros todo el contenido de DataBlock
 	* return array
 	*/
-		int* array = (int*)malloc(sizeof(int)*3);
+		int* array = (int*)malloc(sizeof(int)*4);
 		if(this->isValid()){
 			array[0]=0;
 		}
@@ -100,6 +100,7 @@ public:
 		}
 		array[1]=height;
 		array[2]=width;
+		array[3]=amount_channels;
 		/*for (int i = 0; i < (width*height); i++)
 		{
 			for (int j = 0; j < amount_channels; j++)
@@ -143,6 +144,7 @@ public:
 			block[i].setChannels(nChannels);
 		}
 	}
+
 
 	void* getExtras(){
 	/**

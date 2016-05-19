@@ -73,7 +73,7 @@ public:
 	int* getContent(){
 	/** 
 	* @brief Función que devuelve en un arreglo de enteros todo el contenido del Pixel
-	* return array
+	* return array 
 	*/
 		int* array = (int*)malloc(sizeof(int)*(2+amount_channels));
 		if(this->isValid()){
@@ -98,16 +98,16 @@ public:
 		return amount_channels;
 	}
 
-	int getIntensity(){
+	float getIntensity(){
 	/** 
 	* @brief Método que obtiene la Intensidad del Pixel
 	* return local_max
 	*/
-		int local_max=0;
+		float local_max=0;
 		for(int x=0;x<amount_channels;x++){
-			local_max+=channels[x];
+			local_max+=(float)channels[x];
 		}
-		return (int)(local_max/amount_channels);
+		return (float)(local_max/amount_channels);
 	}
 
 	double getSize(){
@@ -121,6 +121,8 @@ public:
 	void setSize(double nsize){
 		size=nsize;
 	}
+
+
 };
 
 #endif

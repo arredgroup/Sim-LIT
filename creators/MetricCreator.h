@@ -10,8 +10,8 @@
 #ifndef CLASS_METRICCREATOR
 #define CLASS_METRICCREATOR
 
-#include "../class/Metric.h"
-#include "../class/MetricPsnr.h"
+#include "../class/Metric/Metric.h"
+#include "../class/Metric/MetricPsnr.h"
 
 #include <string>
 #include <cstring>

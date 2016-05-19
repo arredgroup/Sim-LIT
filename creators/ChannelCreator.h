@@ -10,9 +10,9 @@
 #ifndef CLASS_CHANNELCREATOR
 #define CLASS_CHANNELCREATOR
 
-#include "../class/Channel.h"
-#include "../class/ChannelFile.h"
-#include "../class/ChannelErlang.h"
+#include "../class/ChannelSimulator/Channel.h"
+#include "../class/ChannelSimulator/ChannelFile.h"
+#include "../class/ChannelSimulator/ChannelErlang.h"
 
 #include <string>
 #include <cstring>

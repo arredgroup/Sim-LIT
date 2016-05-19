@@ -3,8 +3,8 @@
 #define IMAGE_NAME "-image-name" 
 #define WIDTH_BLOCK "-width-block" 
 #define HEIGHT_BLOCK "-height-block"
-#define FOLDER_RESULT "-folder-result"
-#define EXPORT_FILES "-export-files"
+#define FOLDER_RESULT "-folder"
+#define EXPORT_RESULT "-export-result"
 #define EXPORT_IMAGES "-export-images"
 #define SHOW_DATA_SCREEN "-show-data-screen"
 
@@ -13,9 +13,11 @@
 	#define TURNER_MIX "turner-mixer"
 	#define DSJAL_MIX "dsjal-mixer"
 	#define FILE_MIX "file-mixer"
+	#define JPG "jpg-compressor"
 
 #define PACKETIZER_METHOD "-packetizer-method"
-	#define NORMAL_PAKETIZER "normal-packetizer" 
+	#define NORMAL_PACKETIZER "normal-packetizer" 
+	#define FILE_PACKETIZER "file-packetizer" 
 
 #define CHANNEL_METHOD "-channel-method"
 	#define LOST_FROM_FILE "lost-from-file"

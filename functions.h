@@ -1,5 +1,8 @@
 #include <string>
+#include <stdlib.h>
 #include <iostream>
+#include <fstream> 
+#include <sstream>
 
 bool isNumber(char x){
 	if(x=='0')
@@ -25,7 +28,18 @@ bool isNumber(char x){
 	return false;
 }
 
-void readArguments(int n, char const *args[]){
+bool exists_file (const std::string& name) {
+    ifstream f(name.c_str());
+    if (f.good()) {
+        f.close();
+        return true;
+    } else {
+        f.close();
+        return false;
+    }   
+}
+
+bool readArguments(int n, char const *args[]){
 	int i=1;
 	string argument;
 	while(i<n){
@@ -35,17 +49,11 @@ void readArguments(int n, char const *args[]){
 				src = args[i+1];
 				i+=2;
 			}
-			else
-				i=i+1;
-		}
-/*		if(!argument.compare(WORK_DIR)){
-			if((i+1)<n && args[i+1][0]!='-'){
-				folder = args[i+1];
-				i+=2;
+			else{
+				cout << "Image Name was not defined\n " ;
+			    return false;
 			}
-			else
-				i=i+1;
-		}*/
+		}
 		if(!argument.compare(FORWARD_METHOD)){
 			if((i+1)<n && args[i+1][0]!='-' && isNumber(args[i+1][0])){
 				i=i+1;
@@ -56,10 +64,14 @@ void readArguments(int n, char const *args[]){
 					int nArguments = -1;
 					if(isNumber(args[i+1][0]))
 						nArguments = atoi(args[i+1]);
-					vector<int> argv;
+					else{
+						cout << "Number of Processing methods was not defined\n " ;
+						return false;
+					}
+					vector<void*> argv;
 					for(int c=1;c<=nArguments;c++){
-						if(isNumber(args[i+1+c][0]))
-							argv.push_back(atoi(args[i+1+c]));
+						if(args[i+1+c][0]!='-')
+							argv.push_back((void*)(args[i+1+c]));
 					}
 					string fpname = args[i];
 					ForwardProcessing* fpr = ForwardProcessingCreator::create(fpname);
@@ -73,24 +85,31 @@ void readArguments(int n, char const *args[]){
 					i=i+argv.size()+2;
 				}
 			}
-			else
-				i=i+1;
+			
+			else{
+				cout << "Forward Processing Methods was not defined\n " ;
+			    return false;
+			}
 		}
 		if(!argument.compare(WIDTH_BLOCK)){
 			if((i+1)<n && args[i+1][0]!='-' && isNumber(args[i+1][0])){
-				wblock = atoi(args[i+1]);
+				header.wb = atoi(args[i+1]);
 				i+=2;
 			}
-			else
-				i=i+1;
+			else{
+				cout << "Block Width was not defined\n " ;
+			    return false;
+			}
 		}
 		if(!argument.compare(HEIGHT_BLOCK)){
 			if((i+1)<n && args[i+1][0]!='-' && isNumber(args[i+1][0])){
-				hblock = atoi(args[i+1]);
+				header.hb = atoi(args[i+1]);
 				i+=2;
 			}
-			else
-				i=i+1;
+			else{
+				cout << "Block Height was not defined\n " ;
+			    return false;
+			}
 		}
 		if(!argument.compare(PACKETIZER_METHOD)){
 			if((i+2)<n && args[i+1][0]!='-' && isNumber(args[i+1][0])){
@@ -98,13 +117,18 @@ void readArguments(int n, char const *args[]){
 				i=i+1;
 				string pname = args[i+1];
 				pktz = PacketizerCreator::create(pname);
+				if(args[i+2][0]!='-'){
+					pkgSrc=args[i+2];
+					i++;
+				}
 				if(pktz==NULL)
 					pktz = new NormalPacketizer();
 				i+=2;
 			}
+			
 			else{
-				pktz = new NormalPacketizer();
-				i=i+1;
+				cout << "Packetizer Method was not defined\n " ;
+			    return false;
 			}
 		}
 		if(!argument.compare(CHANNEL_METHOD)){
@@ -128,24 +152,19 @@ void readArguments(int n, char const *args[]){
 							chnl=chn;
 						}
 						else{
-							vector<string> str;
-							str.push_back("loss_random.loss");
-							chnl = new ChannelFile(str);
+							cout << "Channel Method was not defined\n " ;
+						    return false;
 						}
 					}
 				}
 				else{
-					vector<string> str;
-					str.push_back("loss_random.loss");
-					chnl = new ChannelFile(str);
-					i=i+1;
+					cout << "Channel Method was not defined\n " ;
+					return false;
 				}
 			}
 			else{
-				vector<string> str;
-				str.push_back("loss_random.loss");
-				chnl = new ChannelFile(str);
-				i=i+1;
+				cout << "Channel Method was not defined\n " ;
+				return false;
 			}
 		}
 		if(!argument.compare(REBUILDER_METHOD)){
@@ -157,8 +176,8 @@ void readArguments(int n, char const *args[]){
 				i=i+2;
 			}
 			else{
-				rbd = new RebuilderAverage();
-				i=i+1;
+				cout << "Rebuilder Method was not defined\n " ;
+				return false;
 			}
 		}
 		if(!argument.compare(METRIC)){
@@ -175,48 +194,55 @@ void readArguments(int n, char const *args[]){
 				i=i+c;
 			}
 			else{
-				metrics.push_back(new MetricPsnr());
-				i=i+1;
+				cout << "Metric was not defined\n " ;
+				return false;
 			}
 		}
 		if(!argument.compare(FOLDER_RESULT)){
 			if((i+1)<n && args[i+1][0]!='-'){
-				folder_result = args[i+1];
+				header.folder = args[i+1];
+				system(("mkdir -p "+header.folder).c_str());
 				i=i+2;
 			}
-			else
-				i=i+1;
+			else{
+				cout << "Results folder was not defined\n " ;
+				return false;
+			}
 		}
 		if(!argument.compare(SHOW_DATA_SCREEN)){
 			show_data=true;
 			i=i+1;
 		}
 		if(!argument.compare(EXPORT_IMAGES)){
-			if((i+1)<n && args[i+1][0]!='-'){
 				export_images=true;
-				folder_images = args[i+1];
-				i=i+2;
-			}
-			else
 				i=i+1;
 		} 
-		if(!argument.compare(EXPORT_FILES)){
+		if(!argument.compare(EXPORT_RESULT)){
 			if((i+1)<n && args[i+1][0]!='-'){
 				export_files=true;
 				result_name = args[i+1];
 				i=i+2;
 			}
-			else
-				i=i+1;
+			else{
+				cout << "Results name file was not defined\n " ;
+				return false;
+			}
 		} 
 	}
+	if(header.folder.size()==0)
+		header.folder="results";
 	if(pktz==NULL)
 		pktz = new NormalPacketizer();
 	if(rbd==NULL)
 		rbd = new RebuilderAverage();
 	if(chnl==NULL){
 		vector<string> str;
-		str.push_back("loss_random.loss");
+		str.push_back("./files/loss_random.loss");
 		chnl = new ChannelFile(str);
 	}
+	return true;
+}
+
+template<typename T> void print_file(ofstream *file, T t, const int& width){
+    *file << left << setw(width) << setfill(' ') << t;
 }

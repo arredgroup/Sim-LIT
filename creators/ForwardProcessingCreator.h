@@ -10,11 +10,12 @@
 #ifndef CLASS_FORWARDPROCESSINGCREATOR
 #define CLASS_FORWARDPROCESSINGCREATOR
 
-#include "../class/ForwardProcessing.h"
-#include "../class/TorusMixer.h"
-#include "../class/TurnerMixer.h"
-#include "../class/DsjalMixer.h"
-#include "../class/MixerFromFile/MixerFromFile.h"
+#include "../class/ForwardProcessing/ForwardProcessing.h"
+#include "../class/ForwardProcessing/TorusMixer.h"
+#include "../class/ForwardProcessing/TurnerMixer.h"
+#include "../class/ForwardProcessing/DsjalMixer.h"
+#include "../class/ForwardProcessing/JpgCompressor.h"
+#include "../class/ForwardProcessing/MixerFromFile/MixerFromFile.h"
 #include <string>
 #include <cstring>
 #include <cstdio>
@@ -39,6 +40,9 @@ static ForwardProcessing* create(string fp){
 	}
 	if(!fp.compare(FILE_MIX)){
 		return new MixerFromFile();
+	}
+	if(!fp.compare(JPG)){
+		return new JpgCompressor();
 	}
 	return NULL;
 }
