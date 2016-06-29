@@ -46,7 +46,7 @@ public:
 		int id=0, sizeElement=0, nPkg=0;
 		string path="files/demo.txt";
 		if(extras!=NULL)
-        	string path =(char*)extras;
+        	path =(char*)extras;
 		if(show_data)
 			cout << "N-DATATYPE-SENDED: " << list.size() << "\n";
 		amount_elements = list.size();
@@ -86,13 +86,13 @@ public:
 		return pkgs;
 	}
 
-	vector<DataType *> packageListToImg(vector<Package> list, bool show_data, bool export_images, HEAD *header){
+	vector<DataType *> packageListToImg(vector<Package> list, bool show_data, HEAD *header){
 	/**
 	 * @brief Método realiza el proceso de despacketizado sobre el vector de DataType
 	 * @param list vector de DataType
 	 */
 	 	if(show_data)
-	 		cout << "N-PACKAGE_RECEIVED: " << list.size() << "\n";
+	 		cout << "N-PACKAGE-RECEIVED: " << list.size() << "\n";
 		vector<DataType *> data(amount_elements,NULL);
 		vector<DataType *> elements;
 		vector<int> idElements;
@@ -109,19 +109,13 @@ public:
 		}
 		int good=0;
 		for(int i=0;i<data.size();i++){
-			if(data[i]!=NULL){
+			if(data.at(i)!=NULL){
 				good+=1;
 			}
 		}
 		amount_elements = good;
 		if(show_data)	
 			cout << "N-DATATYPE-RECEIVED: " << good << "\n";
-		if(export_images){
-            Images aux(data,header,show_data);
-            string path = header->folder+"/image_received_unforwared.bmp";
-            aux.save(path.c_str());
-        	aux.destroy();
-        }
 		return data;
 	}
 

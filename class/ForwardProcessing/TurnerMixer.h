@@ -60,8 +60,8 @@ public:
         }
 		ofstream file;
 		file.open("files/turner.txt",ofstream::out| ofstream::trunc);
-		int height = header->h;
-		int width = header->w;
+	 	int width = (header->w)/(header->wb);
+	 	int height = (header->h)/(header->hb);
 		if(file.is_open()){
 			file << height*width << "\n";
 	        int i = 0, j = 0, k = 0, m = 0;

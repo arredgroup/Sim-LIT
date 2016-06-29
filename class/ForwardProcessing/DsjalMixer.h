@@ -54,8 +54,8 @@ public:
         DataType * aux; 
         _h_=0;
         _w_=0;
-        int height = header->h;
-        int width = header->w;
+        int width = (header->w)/(header->wb);
+        int height = (header->h)/(header->hb);
         int indexH[(height*width)];
         int indexW[(height*width)];
         for (int i = 0, k=0; i < height; i=i+1)

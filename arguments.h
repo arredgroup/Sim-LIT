@@ -13,7 +13,7 @@
 	#define TURNER_MIX "turner-mixer"
 	#define DSJAL_MIX "dsjal-mixer"
 	#define FILE_MIX "file-mixer"
-	#define JPG "jpg-compressor"
+	#define JPG_COMPRESSOR "jpg-compressor"
 
 #define PACKETIZER_METHOD "-packetizer-method"
 	#define NORMAL_PACKETIZER "normal-packetizer" 

@@ -39,8 +39,8 @@ public:
 	 * @param height Cantidad de Filas que tiene la representación de la Imagen
 	 * @param parameters parámetros que requiere el compresor para funcionar
 	 */
-	 	int width = header->w;
-	 	int height = header->h;
+	 	int width = (header->w)/(header->wb);
+	 	int height = (header->h)/(header->hb);
 		if(nParameters!=2){
             cout << "(TORUS): Parameters number are incorrect! STOP!\n";
             return 1;
@@ -53,7 +53,7 @@ public:
         //string format = ".txt";
         //string path = "files/torus" + /*this->get() +*/ format;
 		int n = atoi((char*)parameters[1]);
-		if(n){
+		if(n<0){
             cout << "(TORUS): n Parameter is minor than 0!\n";
 			return 1;
 		}

@@ -48,10 +48,12 @@ using namespace std;
 
 	int main(int argc, char const *argv[])
 	{
+
 		if(!readArguments(argc,argv)){
 			cout << "ERROR: Arguments are not valid!!\n";
 			return 0;
 		}
+		
 		if(export_files){
 			if(exists_file((header.folder + "/" +result_name))){
 				file.open((header.folder + "/" +result_name).c_str(),std::fstream::in | std::fstream::out | std::fstream::app);
@@ -67,6 +69,7 @@ using namespace std;
 				print_file(&file, src, 35);
 			}
 		}
+
 		if(show_data)
 			cout << "Arguments readed\n";
 		Images img(src,&header,show_data);
@@ -79,8 +82,10 @@ using namespace std;
 				cout << "Sim-LIT was ended with errors!\n";
 				return 0;
 			}
-		}	
-
+		}
+		/*for (int i = 0; i < list.size(); ++i){
+				cout << *(static_cast<unsigned char *>(list.at(i)->getExtras())) << "--";
+			}	*/
 		vector<Package> pkgs;
 		if(pkgSrc.size()>0){
 			pkgs = pktz->imgToPackageList(list,package_size,show_data, (void*)pkgSrc.c_str());
@@ -92,22 +97,31 @@ using namespace std;
 		nepkgo = pktz->getSizeElements();
 		vector<Package> rcved = chnl->simulate(pkgs);
 		npkgf = rcved.size();
-
 		if(rcved.size()==0){
 			cout << "Not exists packages received, end \n";
 			return 0;
 		}
-		vector<DataType *> pkgs_rcved = pktz->packageListToImg(rcved,show_data,export_images,&header);
+		vector<DataType *> pkgs_rcved = pktz->packageListToImg(rcved,show_data,&header);
 		nepkgf = pktz->getSizeElements();
-
+/*
+		if(export_images){
+            Images aux(data,header,show_data);
+            string path = header->folder+"/image_received_unforwared.bmp";
+            aux.save(path.c_str());
+        	aux.destroy();
+        }
+*/
 		if(export_files){
 			print_file(&file, 100-((npkgf*100)/npkgo),15);
 			print_file(&file, 100-((nepkgf*100)/nepkgo),15);
 		}
 
 		for (int i = fp.size()-1; i>=0; i=i-1)
-		{
-			fp[i]->unmake(&pkgs_rcved,&header,show_data,export_images);
+		{ 
+			if(fp[i]->unmake(&pkgs_rcved,&header,show_data,export_images)!=0){
+				cout << "Sim-LIT was ended with errors!\n";
+				return 0;
+			}
 		}
 		Images received(pkgs_rcved,&header,show_data);
 

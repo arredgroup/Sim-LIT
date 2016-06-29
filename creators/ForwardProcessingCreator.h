@@ -41,7 +41,7 @@ static ForwardProcessing* create(string fp){
 	if(!fp.compare(FILE_MIX)){
 		return new MixerFromFile();
 	}
-	if(!fp.compare(JPG)){
+	if(!fp.compare(JPG_COMPRESSOR)){
 		return new JpgCompressor();
 	}
 	return NULL;

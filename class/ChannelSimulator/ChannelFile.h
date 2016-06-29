@@ -26,7 +26,7 @@ public:
 	*  @brief Constructor de la clase Erlang
 	*  @param ext argumentos que serán asignados al simulador
 	*/
-		this->setExtras(extras);
+		setExtras(extras);
 	}
 
 	vector<Package> simulate(vector<Package> list){
@@ -36,7 +36,7 @@ public:
 	*  @return list;
 	*/
 		ifstream fp;
-		if(this->getExtras().size()==0){
+		if(getExtras().size()==0){
 			cout << "File hasn't especific\n";
 			return list;
 		}

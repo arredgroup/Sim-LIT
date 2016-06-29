@@ -42,6 +42,8 @@ bool exists_file (const std::string& name) {
 bool readArguments(int n, char const *args[]){
 	int i=1;
 	string argument;
+	header.hb=1;
+	header.wb=1;
 	while(i<n){
 		argument=args[i];
 		if(!argument.compare(IMAGE_NAME)){
@@ -57,7 +59,13 @@ bool readArguments(int n, char const *args[]){
 		if(!argument.compare(FORWARD_METHOD)){
 			if((i+1)<n && args[i+1][0]!='-' && isNumber(args[i+1][0])){
 				i=i+1;
-				int amount_forward_processing=atoi(args[i]);
+				int amount_forward_processing = 0;
+				if(isNumber(args[i][0]))
+					amount_forward_processing=atoi(args[i]);
+				else{
+					cout << "Number of Processing methods was not defined\n " ;
+					return false;
+				}
 				int x=1;
 				i=i+1;
 				while(x<=amount_forward_processing && i<n && args[i][0]!='-'){
@@ -65,7 +73,7 @@ bool readArguments(int n, char const *args[]){
 					if(isNumber(args[i+1][0]))
 						nArguments = atoi(args[i+1]);
 					else{
-						cout << "Number of Processing methods was not defined\n " ;
+						cout << "Number of Parameters de Processing methods was not defined\n " ;
 						return false;
 					}
 					vector<void*> argv;

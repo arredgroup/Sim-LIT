@@ -145,7 +145,6 @@ public:
 		}
 	}
 
-
 	void* getExtras(){
 	/**
 	 * @brief Método que Obtiene el los Datos del Bloque

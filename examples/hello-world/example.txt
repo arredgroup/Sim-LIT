@@ -1,15 +1,5 @@
-./test -image-name 2.jpg -forward-method 2 torus-mixer 2 5 6 color-compressor 1 4 -packetizer-method 700 normal-packetizer -channel-method lost-from-file 1 loss_random.loss -rebuilder-method rebuilder-average-opt -metric 1 metric-psnr -width-block 10 -height-block 10 -export-files -show-data-screen
+./simlit -image-name src/1.bmp -packetizer-method 50000 file-packetizer files/demo.txt -channel-method lost-from-file 1 files/lossfile_5.loss -rebuilder-method rebuilder-average-opt -metric 1 metric-psnr -export-result resultados.txt -folder experiment_two -show-data-screen -export-images -width-block 128 -height-block 128
 
-./test -image-name 3.jpg -forward-method 2 torus-mixer 2 3 6 dsjal-mixer 1 700 -packetizer-method 700 normal-packetizer -channel-method lost-from-file 1 loss_random.loss -rebuilder-method rebuilder-average -metric 1 metric-psnr -width-block 10 -height-block 10 -export-files -show-data-screen
+./simlit -image-name src/1.bmp -forward-method 1 torus-mixer 2 5 10 -packetizer-method 50000 file-packetizer files/demo.txt -channel-method lost-from-file 1 files/lossfile_5.loss -rebuilder-method rebuilder-average-opt -metric 1 metric-psnr -export-result resultados.txt -folder experiment_two -show-data-screen -export-images -width-block 128 -height-block 128
 
-./test -image-name 3.jpg -forward-method 1 color-compressor 1 4 -packetizer-method 200 normal-packetizer -channel-method lost-erlang 2 5 44 -rebuilder-method rebuilder-average -metric 1 metric-psnr -width-block 8 -height-block 8 -export-files -show-data-screen
-
-./test -image-name 4.bmp -forward-method 1 color-compressor 1 2 -packetizer-method 500 normal-packetizer -channel-method lost-erlang 2 100 240 -rebuilder-method rebuilder-average -metric 1 metric-psnr -width-block 8 -height-block 8 -export-files -show-data-screen 
-
-./test -image-name 4.bmp -packetizer-method 200 normal-packetizer -channel-method lost-from-file 1 lossfile_1.loss -rebuilder-method rebuilder-average-opt -metric 1 metric-psnr -width-block 8 -height-block 8 -export-files -show-data-screen
-
-./test -image-name 5.bmp -forward-method 1 torus-mixer 2 7 10 -packetizer-method 80 normal-packetizer -channel-method lost-from-file 1 lossfile_3.loss -rebuilder-method rebuilder-average-opt -metric 1 metric-psnr -width-block 8 -height-block 8 -export-files -show-data-screen
-
-./test -image-name 4.bmp -forward-method 2 torus-mixer 2 5 6 color-compressor 1 3 -packetizer-method 700 normal-packetizer -channel-method lost-from-file 1 loss_random.loss -rebuilder-method rebuilder-average -metric 1 metric-psnr -width-block 1 -height-block 1 -export-files -show-data-screen
-
-./test -image-name 4.bmp -export-files 
+./simlit -image-name src/6.bmp -forward-method 1 jpg-compressor 1 80 -packetizer-method 50 normal-packetizer -rebuilder-method rebuilder-average-opt -metric 1 metric-psnr -export-result resultados.txt -folder experiment_two -show-data-screen -export-images

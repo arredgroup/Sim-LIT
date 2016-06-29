@@ -50,7 +50,6 @@ public:
 	 * @param pos Posición del elemento x en su lista original
 	 * @return devuelve un valor verdadero si el elemento si se agregó correctamente 
 	 */
-		//cout << "\t SIZE: "<< x->getSize() << "\n";
 		if((actualSize()+(x->getSize()))<=size){
 			elements.push_back(x);
 			idElements.push_back(pos);

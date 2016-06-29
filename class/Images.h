@@ -240,6 +240,17 @@ public:
 		img.save(destiny);
 	}
 
+	vector<int> getPixel(int fila, int col){
+		DataBlock aux = getBlockWhereIsPixel(fila,col);
+		if(!aux.isValid()) 
+			return vector<int>();
+		vector<Pixel> *vct = (vector<Pixel> *)aux.getExtras();
+		int pos = ((fila%hblock)*hblock)+(col%wblock);
+		if(pos >= hblock*wblock)
+			return vector<int>();
+		return vct->at(pos).getChannels();
+	}
+
 	void clearBlocks(HEAD *header){
 		DataBlock** newMatrix;
 		newMatrix = new DataBlock*[h];
@@ -264,6 +275,7 @@ public:
 				}
 			}
 		}
+		free(matrix);
 		matrix = newMatrix;
 		hblock = 1;
 		wblock = 1;
@@ -281,8 +293,7 @@ public:
 	}
 
 	void destroy(){
-		for( int i = 0 ; i < h/hblock ; i++ )
-	    {
+		for( int i = 0 ; i < h/hblock ; i++ ){
 	        delete [] matrix[i];
 	    }
 	    delete [] matrix;
@@ -309,6 +320,19 @@ private:
 		}
 		return list;
 	}
+
+	DataBlock getBlockWhereIsPixel(int f, int c){
+		if(f >= h || c >= w)
+			return DataBlock();
+		int fib = (int)(f/hblock);
+		int cib = (int)(c/wblock);
+		if(f%hblock>0)
+			fib+=1;
+		if(c%wblock>0)
+			cib+=1;
+		return matrix[fib][cib];
+	}
+
 };
 
 #endif

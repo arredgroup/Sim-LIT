@@ -44,20 +44,25 @@ public:
 		Package* aux = new Package(size,id);
 		id++;
 		amount_elements = list.size();
-		for(int i=0;i<amount_elements;i++){
-			if(!aux->put((DataType*)list[i],i)){
+		for(int i=0;i < amount_elements; i+=1){
+			DataType* element = list.at(i);
+			if(!aux->put(element,i)){
 				pkgs.push_back(*aux);
 				aux = new Package(size,id);
-				id++;
-				aux->put((DataType*)list[i],i);
+				if(!aux->put(element,i)){
+					aux = new Package(element->getSize()+1.0,id);
+					aux->put(element,i);
+				}
+				id+=1;
 			}
 		}
 		pkgs.push_back(*aux);
-		//cout <<"Nº PACKAGES " << pkgs.size()<<"\n";
+		if(show_data)
+			cout <<"Nº PACKAGES " << pkgs.size()<<"\n";
 		return pkgs;
 	}
 
-	vector<DataType *> packageListToImg(vector<Package> list, bool show_data, bool export_images, HEAD *header){
+	vector<DataType *> packageListToImg(vector<Package> list, bool show_data, HEAD *header){
 	/**
 	 * @brief Método realiza el proceso de despacketizado sobre el vector de DataType
 	 * @param list vector de DataType
@@ -66,7 +71,7 @@ public:
 		vector<DataType *> elements;
 		vector<int> idElements;
 		int pos=0;
-		for(int i=0;i<list.size();i++){
+		for(int i=0;i<list.size();i+=1){
 			Package aux = list[i];
 			elements = aux.getElements();
 			idElements = aux.getIdElements();
@@ -77,20 +82,13 @@ public:
 			}
 		}
 		int good=0;
-		for(int i=0;i<data.size();i++){
-			if(data[i]!=NULL){
+		for(int i=0;i<data.size();i+=1){
+			if(data[i]!=NULL)
 				good+=1;
-			}
 		}
 		amount_elements = good;
 		if(show_data)	
 			cout << "N-DATATYPE-RECEIVED: " << good << "\n";
-		if(export_images){
-            Images aux(data,header,show_data);
-            string path = header->folder+"/image_received_unforwared.bmp";
-            aux.save(path.c_str());
-        	aux.destroy();
-        }
 		return data;
 	}
 
