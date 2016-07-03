@@ -15,7 +15,6 @@
 #include "../DataByteStream.h"
 #include <cmath>
 
-#define PI 3.14159265
 #define JPGE_MAX(a,b) (((a)>(b))?(a):(b))
 #define JPGE_MIN(a,b) (((a)<(b))?(a):(b))
 
@@ -27,8 +26,13 @@ private:
 
 	bool proceed;
 
+	const double PI  =3.141592653589793238463;
+
 	int jpg_width;
 	int jpg_height;
+
+	int image_width;
+	int image_height;
 
 	vector< vector< vector <double> > > image;
 	vector< vector< vector <double> > > dct_r;
@@ -43,9 +47,9 @@ private:
 	int s_std_lum_quant[64] = { 16,11,12,14,12,10,16,14,13,14,18,17,16,19,24,40,26,24,22,22,24,49,35,37,29,40,58,51,61,60,57,51,56,55,64,72,92,78,64,68,87,69,55,56,80,109,81,87,95,98,103,104,103,62,77,113,121,112,100,120,92,101,103,99 };
 	int quantization_table[64];
 
-	//enum subsampling { Y_ONLY = 0, H1V1 = 1, H2V1 = 2, H2V2 = 3 };
+	enum subsampling { Y_ONLY = 0, H1V1 = 1, H2V1 = 2, H2V2 = 3 };
 
-	//int type_subsampling;
+	int type_subsampling;
 	int quality;
 
 	int extra_w;
@@ -55,6 +59,9 @@ private:
 
 	vector< vector<int > > bytes_before_huffman;
 	vector< vector<int > > bytes_huffman;
+	vector< vector< vector<int > > > negative_position;
+
+	vector< vector<double> > dc_coef;
 
 	vector<DataType *> new_list;
 
@@ -65,7 +72,7 @@ public:
 	~JpgCompressor(){}
 
 	int make(vector<DataType *> *list, HEAD *header, vector<void*> parameters, int nParameters, bool show_data, bool export_image){
-		if(nParameters!=1){
+		if(nParameters!=2){
             cout << "(JPEG): Parameters number are incorrect! STOP!\n";
             return 1;
 		}
@@ -74,17 +81,35 @@ public:
             cout << "(JPEG): Compression Quality must be between 1 and 100\n";
             return 1;
         }
-		extra_w = (header->w*header->wb)%8;
-		extra_h = (header->h*header->hb)%8;
-		readImage(list,header);
-		generateBlocks();
-		convertColorSpace();
-		generateAllDCT();
-		computeQuantizationTable();
-		quantizateAllDCT();
-		reduceZerosToAll();
-		applyHuffmanToAll();
-		generateDatabytestream();
+
+		char* type_ss = (char*)parameters[1];
+		if(strcasecmp(type_ss, "Y_ONLY")!=0 && strcasecmp(type_ss, "H1V1")!=0 && strcasecmp(type_ss, "H2V1")!=0 && strcasecmp(type_ss, "H2V2")!=0){
+			cout << "(JPEG): Compression Subsampling Is Wrong!\n";
+            return 1;
+		}
+		setTypeSubsampling(type_ss);
+
+		image_width = (header->w*header->wb);
+		image_height = (header->h*header->hb);
+
+		jpg_width = image_width/8;
+		jpg_height = image_height/8;
+		if(image_width%8!=0)
+			jpg_width+=1;
+		if(image_height%8!=0)
+			jpg_height+=1;
+		extra_w = image_width%8;
+		extra_h = image_height%8;
+
+		readImage(list, header);
+		generateExtraPixels(); //Crea los bloques de 8x8
+		convertColorSpace(); //realiza el cambio de RGB a YCC
+		calculateAllDCT(); // Calcula la DCT en cada bloque
+		computeQuantizationTable(); //Genera la tabla de cuantización
+		quantizateAllDCT(); //cuantiza todos los bloques
+		reduceZerosToAll(); // Elimina los ceros y genera un vector dado zigzag
+		applyHuffmanToAll(); //Aplica Huffman
+		generateDatabytestream(); //Exporta los elementos
 		*list = new_list;
         if(show_data)
             cout << "JPEG Compression Applied to Image\n";
@@ -97,59 +122,70 @@ public:
 
 	int unmake(vector<DataType *> *list, HEAD *header, bool show_data, bool export_image){
 		if(proceed){
-			clearAll();
-			generateLocalUnsignedChar(list);
-			getchar();
-			resetHuffmanToAll();
-			getchar();/*
-			amplifyZerosToAll();
-			redoQuantizateAllDCT();
-			regenerateAllDCT();
+			clearAll(); //Limpia la memoria del compresor
+			generateLocalUnsignedChar(list); // Importa el vector de datos comprimidos
+			resetHuffmanToAll(); //deshace Huffman
+			amplifyZerosToAll();//Agrega los ceros faltantes, genera un bloque de ocho x ocho usando zigzag
+			redoQuantizateAllDCT();//Invierte la Cuantización
+			calculateAllIDCT();//Calcula la IDCT
 			invertColorSpace();
 			clearExtraPixels();
 			generateImage();
-			*/
+			*list = new_list;
 			proceed = false;
 		    if(show_data)
 				cout << "JPEG Compression undo to Image\n";
-			return 1;
+			return 0;
 		}
 		return 1;
 	}
 
 	void clearAll(){
 		image.clear();
-		for(int i=0;i<dct_r.size();i+=1){
-			for(int j=0;j<dct_r[i].size();j+=1){
-				dct_r[i][j].clear();
-			}
-		}
-		for(int i=0;i<dct_g.size();i+=1){
-			for(int j=0;j<dct_g[i].size();j+=1){
-				dct_g[i][j].clear();
-			}
-		}
-		for(int i=0;i<dct_b.size();i+=1){
-			for(int j=0;j<dct_b[i].size();j+=1){
-				dct_b[i][j].clear();
-			}
-		}
 		y_data.clear();
 		cr_data.clear();
 		cb_data.clear();
 		compressed_blocks.clear();
 		bytes_huffman.clear();
+		bytes_before_huffman.clear();
+		dct_r.clear();
+		dct_g.clear();
+		dct_b.clear();
+	}
+
+	double min(double a, double b){
+		if(a<b)
+			return a;
+		return b;
+	}
+
+	double max(double a, double b){
+		if(a>b)
+			return a;
+		return b;
+	}
+
+	void setTypeSubsampling(char* type){
+		if(!strcasecmp(type,"Y_ONLY"))
+			type_subsampling = Y_ONLY;
+		if(!strcasecmp(type,"H1V1"))
+			type_subsampling = H1V1;
+		if(!strcasecmp(type,"H2V1"))
+			type_subsampling = H2V1;
+		if(!strcasecmp(type,"H2V2"))
+			type_subsampling = H2V2;
+	}
+
+	bool isEmpty(int pos, vector <double> v){
+		for (int i = pos; i < v.size(); i+=1){
+			if(v[i]!=0)
+				return false;
+		}
+		return true;
 	}
 
 private:
 
-	unsigned char* generateEmpty(){
-		unsigned char* vacio = (unsigned char*)malloc(sizeof(unsigned char)*64);
-		for (int i = 0; i < 64; i+=1){
-			vacio[i]=(unsigned char)0.0;
-		}
-		return vacio;
-	}
 
 	/***************************************************************
 	*
@@ -157,111 +193,184 @@ private:
 	*
 	****************************************************************/
 
-	void clearExtraPixels(){
-		if(extra_w>0 || extra_h>0){
-			vector< vector< vector <double> > > img_original;
-			img_original.resize((jpg_height*8)-extra_h);
-			for (int i = 0; i < img_original.size(); i+=1){
-				img_original[i].resize((jpg_width*8)-extra_w);
-			}
-			for (int i = 0; i < (jpg_height*8)-extra_h; i+=1){
-				for (int j = 0; j < (jpg_width*8)-extra_w; j+=1){
-					img_original[i][j]=image[i][j];
+	void generateLocalUnsignedChar(vector<DataType *> *list){
+		int size = list->size();
+		for(int i = 0;i < size;i+=3){
+			vector < unsigned char*> compressed_block;
+			vector <int> bytes_huffman_block;
+			vector <int> bytes_original_block;
+			for(int c = 0; c < 3; c+=1){
+				DataByteStream * compressed = (DataByteStream *)list->at(i+c);
+				if(compressed!=NULL && compressed->isValid()){
+					unsigned char* huffman_stream = (unsigned char*)compressed->getExtras();
+					int size_b_h = compressed->getHuffmanBytes();
+					bytes_huffman_block.push_back(size_b_h);
+					int size_b_o = compressed->getOriginalBytes();
+					bytes_original_block.push_back(size_b_o);
+					compressed_block.push_back(huffman_stream);
+				}
+				else{
+					unsigned char* huffman_stream = (unsigned char*)malloc(sizeof(unsigned char));
+					huffman_stream[0] = (unsigned char)0;
+					bytes_huffman_block.push_back(0);
+					bytes_original_block.push_back(0);
+					compressed_block.push_back(huffman_stream);
 				}
 			}
-			image.clear();
-			image = img_original;
+			bytes_huffman.push_back(bytes_huffman_block);
+			bytes_before_huffman.push_back(bytes_original_block);
+			compressed_blocks.push_back(compressed_block);
 		}
 	}
 
-	void invertColorSpace(){
-		for(int i=0;i<image.size();i+=1){
-			for(int j=0;j<image[i].size();j+=1){
-				if(image[i][j].size()==3)
-					image[i][j] = RGB_to_YCC(image[i][j]);
-				if(image[i][j].size()==1)
-					image[i][j] = Y_to_YCC(RGB_to_Y(image[i][j]));
+	void resetHuffman(int fb, int cb){
+ 		int block = (fb*jpg_width)+cb;
+ 		int size = compressed_blocks[block].size();
+		for(int i = 0;i < size && i < bytes_huffman[block].size() && i < bytes_before_huffman[block].size();i+=1){
+			if(bytes_huffman[block][i]>0){
+				int bytes_b = bytes_before_huffman[block][i];
+				int bytes_h = bytes_huffman[block][i];
+				unsigned char* uncompressed = (unsigned char*)malloc(sizeof(unsigned char)*bytes_b);
+				Huffman_Uncompress(compressed_blocks[block][i], uncompressed,  bytes_h, bytes_b);
+				free(compressed_blocks[block][i]);
+				compressed_blocks[block][i] = uncompressed;
+			}
+			else{
+				unsigned char* vacio = (unsigned char*)malloc(sizeof(unsigned char)*64);
+				for (int i = 0; i < 64; i+=1){
+					vacio[i]=(unsigned char)0;
+				}
+				compressed_blocks[block][i] = vacio;
 			}
 		}
 	}
 
-	vector<double> YCC_to_RGB(vector<double> ycc){
-		vector<double> rgb;
-		double R = round(ycc[0] + 1.402  * (ycc[2]-128));
-		double G = round(ycc[1] - 0.34414* (ycc[1]-128) - 0.71414 * (ycc[2]-128));
-		double B = round(ycc[2] + 1.772  * (ycc[1]-128));
-		rgb.push_back(R);
-		if(G==0 && B==0)
-			return rgb;
-		rgb.push_back(G);
-		rgb.push_back(B);
-		return rgb;
-	}
-
-	void calculateIDCT(int fb, int cb){
-		int pos = (fb*jpg_width)+cb;
-		vector< vector<double>> dr;
-		vector< vector<double>> dg;
-		vector< vector<double>> db;
-		image.clear();
-		dr.resize(8);
-		dg.resize(8);
-		db.resize(8);
-		image.resize(jpg_height*8);
-		for (int i = 0; i < image.size(); i+=1){
-			image[i].resize(jpg_width*8);
-		}
-		double Cu, Cv;
-		for (int i = 0; i < 8; i+=1){
-			dr[i].resize(8);
-			dg[i].resize(8);
-			db[i].resize(8);
-		}
-		for (int f = 0; f < 8; f+=1){
-			for (int c = 0; c < 8; c+=1){
-				dr[f][c] = 0.0;
-				dg[f][c] = 0.0;
-				db[f][c] = 0.0; 
-				for (int i = 0; i < 8; i+=1) {
-		            for (int j = 0; j < 8; j+=1) {
-						if (f == 0) {
-		                	Cu = 1.0 / sqrt(2.0);
-			            } else {
-			                Cu = 1.0;
-			            }
-
-			            if (c == 0) {
-			                Cv = 1.0 / sqrt(2.0);
-			            } else {
-			                Cv = (1.0);
-			            }  
-		                //dr[f][c] += image[pos][0] * cos(M_PI/((float)8)*(f+1./2.)*i) * cos(M_PI/((float)8)*(c+1./2.)*j);
-		                dr[f][c] += dct_r[pos][f][c] * cos( (((2*i)+1)*f*PI)/16 ) * cos( (((2*j)+1)*c*PI)/16 );
-		                dg[f][c] += dct_g[pos][f][c] * cos( (((2*i)+1)*f*PI)/16 ) * cos( (((2*j)+1)*c*PI)/16 );
-		                db[f][c] += dct_b[pos][f][c] * cos( (((2*i)+1)*f*PI)/16 ) * cos( (((2*j)+1)*c*PI)/16 );
-		            }              
-		        }
-		        dr[f][c] = round(0.25 * dr[f][c]);
-		        dg[f][c] = round(0.25 * dg[f][c]);
-		        db[f][c] = round(0.25 * db[f][c]);
-			}
-		}
-		for (int f = 0; f < 8; f+=1){
-			for (int c = 0; c < 8; c+=1){
-				//pos = ((fb*jpg_width*8)+(cb*64))+(f*8)+c;
-				vector<double> ycc;
-				ycc.push_back(dr[f][c]);
-				ycc.push_back(dg[f][c]);
-				ycc.push_back(db[f][c]);
-				image[(fb*8)+f][(cb*8)+c] = ycc;
-			}
-		}
-	}
-
-	void regenerateAllDCT(){
+	void resetHuffmanToAll(){
 		for (int f = 0; f < jpg_height; f+=1){
 			for (int c = 0; c < jpg_width; c+=1){
-				calculateIDCT(f,c);
+				resetHuffman(f,c);
+			}
+		}
+	}
+
+	void amplifyZeros(int fb, int cb){
+		int block = (fb*jpg_width)+cb;
+		int size = 0;
+		vector<double> with_zero_r;
+		with_zero_r.resize(65,0);
+		vector<double> with_zero_g;
+		with_zero_g.resize(65,0);
+		vector<double> with_zero_b;
+		with_zero_b.resize(65,0);
+		int i=0;
+		//int pos = 0;
+		unsigned char* uc_r = compressed_blocks[block][0];
+		size = bytes_before_huffman[block][0];
+		for(i=0;i<size;i+=1){
+			with_zero_r[i]=static_cast<double>(uc_r[i]);
+			if(negative_position[block][0][i]!=0)
+				with_zero_r[i] += (256*negative_position[block][0][i]);
+		}
+		while(i<65){
+			with_zero_r[i]=0;
+			i+=1;
+		}
+		unsigned char* uc_g = compressed_blocks[block][1];
+		size = bytes_before_huffman[block][1];
+		for(i=0;i<size;i+=1){
+			with_zero_g[i]=static_cast<double>(uc_g[i]);
+			if(negative_position[block][1][i]!=0)
+				with_zero_g[i] += (256*negative_position[block][1][i]);
+		}
+		while(i<65){
+			with_zero_g[i]=0;
+			i+=1;
+		}
+		unsigned char* uc_b = compressed_blocks[block][2];
+		size = bytes_before_huffman[block][2];
+		for(i=0;i<size;i+=1){
+			with_zero_b[i]=static_cast<double>(uc_b[i]);
+			if(negative_position[block][2][i]!=0)
+				with_zero_b[i] += (256*negative_position[block][2][i]);
+		}
+		while(i<65){
+			with_zero_b[i]=0;
+			i+=1;
+		}
+		double dc_r = with_zero_r[0];
+		with_zero_r.erase(with_zero_r.begin());
+		double dc_g = with_zero_g[0];
+		with_zero_g.erase(with_zero_g.begin());
+		double dc_b = with_zero_b[0];
+		with_zero_b.erase(with_zero_b.begin());	
+
+		vector<double> d_coef;
+
+		d_coef.push_back(dc_r);
+		d_coef.push_back(dc_g);
+		d_coef.push_back(dc_b);
+
+		dc_coef.push_back(d_coef);
+
+
+
+		for (int i = 0; i < 64; i+=1){
+			int pos = zigzag[i];
+			int col = pos%8;
+			int row = pos/8;
+			dct_r[block][row][col] = with_zero_r[i];
+			dct_g[block][row][col] = with_zero_g[i];
+			dct_b[block][row][col] = with_zero_b[i];
+		}
+	}
+
+	void checkDC(){
+		double dc_r = 0;
+		double dc_g = 0;
+		double dc_b = 0;
+		for (int i = 0; i < jpg_height; i+=1){
+			for(int j = 0;j < jpg_width; j+=1){
+				if(j==0 && i==0){
+					dc_coef[(i*jpg_height)+j][0] = dc_coef[(i*jpg_height)+j][0] + dc_r;
+					dc_coef[(i*jpg_height)+j][1] = dc_coef[(i*jpg_height)+j][1] + dc_g;
+					dc_coef[(i*jpg_height)+j][2] = dc_coef[(i*jpg_height)+j][2] + dc_b;
+				}
+				else{
+					dc_coef[(i*jpg_height)+j][0] = dc_coef[(i*jpg_height)+j-1][0] + dc_g;
+				}
+			}
+		}
+	}
+
+	void amplifyZerosToAll(){
+		dct_r.resize(jpg_height*jpg_width);
+		dct_g.resize(jpg_height*jpg_width);
+		dct_b.resize(jpg_height*jpg_width);
+		for (int b = 0; b < (jpg_height*jpg_width); b+=1){
+			dct_r[b].resize(8);
+			dct_g[b].resize(8);
+			dct_b[b].resize(8);
+			for (int i = 0; i < 8; i+=1){
+				dct_r[b][i].resize(8,0);
+				dct_g[b][i].resize(8,0);
+				dct_b[b][i].resize(8,0);
+			}
+		}
+		for (int f = 0; f < jpg_height; f+=1){
+			for (int c = 0; c < jpg_width; c+=1){
+				amplifyZeros(f,c);
+			}
+		}
+	}
+
+	void redoQuantizateDCT(int fb, int cb){
+		int pos = (fb*jpg_width)+cb;
+		for (int f = 0; f < 8; f+=1){
+			for (int c = 0; c < 8; c+=1){
+				int x = (f*8)+c;
+				dct_r[pos][f][c] = dct_r[pos][f][c] * quantization_table[x];
+				dct_g[pos][f][c] = dct_g[pos][f][c] * quantization_table[x];
+				dct_b[pos][f][c] = dct_b[pos][f][c] * quantization_table[x];
 			}
 		}
 	}
@@ -274,137 +383,121 @@ private:
 		}
 	}
 
-	void redoQuantizateDCT(int fb, int cb){
-		int pos = fb*jpg_width+cb;
-		for (int f = 0; f < 8; f+=1){
-			for (int c = 0; c < 8; c+=1){
-				int x = (f*8)+c;
-				dct_r[pos][f][c] = round(dct_r[pos][f][c] * quantization_table[x]);
-				dct_g[pos][f][c] = round(dct_g[pos][f][c] * quantization_table[x]);
-				dct_b[pos][f][c] = round(dct_b[pos][f][c] * quantization_table[x]);
-			}
+	void calculateIDCT(int fb, int cb){
+		int pos = (fb*jpg_width)+cb;
+		vector< vector<double>> dr;
+		vector< vector<double>> dg;
+		vector< vector<double>> db;
+		dr.resize(8);
+		dg.resize(8);
+		db.resize(8);
+		double Cu, Cv;
+		for (int i = 0; i < 8; i+=1){
+			dr[i].resize(8,0);
+			dg[i].resize(8,0);
+			db[i].resize(8,0);
 		}
+
+		for (int x = 0; x < 8; x+=1){
+			for (int y = 0; y < 8; y+=1){
+				for (int u = 0; u < 8; u+=1) {
+		            for (int v = 0; v < 8; v+=1) {
+						if (u == 0) {
+		                	Cu = 1/sqrt(2);
+			            } else {
+			                Cu = 1;
+			            }
+
+			            if (v == 0) {
+			                Cv = 1/sqrt(2);
+			            } else {
+			                Cv = 1;
+			            }  
+		                dr[x][y] += Cu * Cv * dct_r[pos][u][v] * cos( (((2*x)+1)*u*PI)/16 ) * cos( (((2*y)+1)*v*PI)/16 );
+		                dg[x][y] += Cu * Cv * dct_g[pos][u][v] * cos( (((2*x)+1)*u*PI)/16 ) * cos( (((2*y)+1)*v*PI)/16 );
+		                db[x][y] += Cu * Cv * dct_b[pos][u][v] * cos( (((2*x)+1)*u*PI)/16 ) * cos( (((2*y)+1)*v*PI)/16 );
+		            }             
+		        }
+		        dr[x][y] = 0.25 * dr[x][y];
+		        dg[x][y] = 0.25 * dg[x][y];
+		        db[x][y] = 0.25 * db[x][y];
+				image[(fb*8)+x][(cb*8)+y].push_back(dr[x][y]);
+				image[(fb*8)+x][(cb*8)+y].push_back(dg[x][y]);
+				image[(fb*8)+x][(cb*8)+y].push_back(db[x][y]);
+			}
+		}/*
+		for (int x = 0; x < 8; x+=1){
+			for (int y = 0; y < 8; y+=1){
+				cout << "[" << dr[x][y] << "," << dg[x][y] << "," << db[x][y] <<"]\t";
+			}
+			cout << "\n";
+		}
+		cout << "\n";*/
 	}
 
-	void amplifyZerosToAll(){
+	void calculateAllIDCT(){
+		image.resize(jpg_height*8);
+		for (int i = 0; i < image.size(); i+=1){
+			image[i].resize(jpg_width*8);
+		}
 		for (int f = 0; f < jpg_height; f+=1){
 			for (int c = 0; c < jpg_width; c+=1){
-				amplifyZeros(f,c);
+				calculateIDCT(f,c);
+			}
+		}
+	}
+	
+	vector<double> YCC_to_RGB(vector<double> ycc){
+		ycc[0] += 128;
+		ycc[1] += 128;
+		ycc[2] += 128;
+		/*
+	 	double R = (ycc[0] + 1.40200 * (ycc[2] - 128));
+ 		double G = (ycc[0] - 0.34414 * (ycc[1] - 128) - 0.71414 * (ycc[2] - 128));
+ 		double B = (ycc[0] + 1.77200 * (ycc[1] - 128));
+		*/
+		double B = (1.164 * (ycc[0] - 16))                     	      + (2.018 * (ycc[1] - 128));
+		double G = (1.164 * (ycc[0] - 16)) - (0.813 * (ycc[2] - 128)) - (0.391 * (ycc[1] - 128));
+		double R = (1.164 * (ycc[0] - 16)) + (1.596 * (ycc[2] - 128));
+
+		R = round(max(min(R,255),0));
+ 		G = round(max(min(G,255),0));
+ 		B = round(max(min(B,255),0));
+
+ 		vector<double> rgb;
+		rgb.push_back(R);
+		rgb.push_back(G);
+		rgb.push_back(B);
+
+		return rgb;
+	}
+
+	void invertColorSpace(){
+		for(int i=0;i<image.size();i+=1){
+			for(int j=0;j<image[i].size();j+=1){
+				image[i][j] = YCC_to_RGB(image[i][j]);
 			}
 		}
 	}
 
-	void amplifyZeros(int fb, int cb){
-		int block = fb*jpg_width+cb;
-		int size = 0;
-		vector<double> with_zero_r;
-		with_zero_r.resize(64,0.0);
-		vector<double> with_zero_g;
-		with_zero_g.resize(64,0.0);
-		vector<double> with_zero_b;
-		with_zero_b.resize(64,0.0);
-		int i=0;
-		unsigned char* uc_r = compressed_blocks[block][0];
-		size = sizeof(uc_r) / sizeof(unsigned char);
-		for(i=0;i<size;i+=1)
-			with_zero_r[i]=(float)uc_r[i];
-		while(i<64){
-			with_zero_r[i]=0.0;
-		}
-		unsigned char* uc_g = compressed_blocks[block][1];
-		size = sizeof(uc_g) / sizeof(unsigned char);
-		for(i=0;i<size;i+=1)
-			with_zero_r[i]=(float)uc_g[i];
-		while(i<64){
-			with_zero_r[i]=0.0;
-		}
-		unsigned char* uc_b = compressed_blocks[block][2];
-		size = sizeof(uc_b) / sizeof(unsigned char);
-		for(i=0;i<size;i+=1)
-			with_zero_r[i]=(float)uc_b[i];
-		while(i<64){
-			with_zero_r[i]=0.0;
-		}
-		int x=0;
-		while(x<64){
-			for (int f = 0; f < 8; f+=1){
-				for (int c = 0; c < 8; c+=1){
-					if(zigzag[x]==(f*8)+c){
-						dct_r[block][f][c] = with_zero_r[(f*8)+c];
-						dct_g[block][f][c] = with_zero_g[(f*8)+c];
-						dct_b[block][f][c] = with_zero_b[(f*8)+c];
-					}
-				}
-			}
-			x+=1;
-		}
-	}
-
-	void generateLocalUnsignedChar(vector<DataType *> *list){
-		int size = list->size();
-		int x=0;
-		vector < unsigned char*> compressed_block;
-		vector <int> bytes_block;
-		DataType * compressed = NULL;
-		for(int i = 0;i < size;i+=1){
-			compressed = list->at(i);
-			if(compressed!=NULL && compressed->isValid()){
-				unsigned char* huffman_stream = (unsigned char*)compressed->getExtras();
-				int size_bytes = (int)compressed->getSize();
-				bytes_block.push_back(size_bytes);
-				compressed_block.push_back(huffman_stream);
-			}
-			else{
-				unsigned char* huffman_stream = (unsigned char*)malloc(sizeof(unsigned char));
-				huffman_stream[0] = '\0';
-				bytes_block.push_back(0);
-				compressed_block.push_back(huffman_stream);
-			}
-			x+=1;
-			if(x==3){
-				bytes_huffman.push_back(bytes_block);
-				compressed_blocks.push_back(compressed_block);
-				vector < unsigned char*> compressed_block;
-				vector <int> bytes_block;
-				x=0;
-			}
-		}
-		cout << "IMPORTADA... SIZE:" << compressed_blocks.size() << "\n";
-		getchar();
-	}
-/*
-	void substring(unsigned char* sbtr, unsigned char* str, int pinit, int pend){
-		int size = pend - pinit;
-		for (int i = 0; i < size; i+=1){
-			sbtr[i] = str[pinit+i];
-		}
-	}
-*/
-	void resetHuffmanToAll(){
-		for (int f = 0; f < jpg_height; f+=1){
-			for (int c = 0; c < jpg_width; c+=1){
-				resetHuffman(f,c);
+	void clearExtraPixels(){
+		if(extra_w>0 || extra_h>0){
+			image.resize((jpg_height*8)-extra_h);
+			for (int i = 0; i < image.size(); i+=1){
+				image[i].resize((jpg_width*8)-extra_w);
 			}
 		}
 	}
 
-	void resetHuffman(int fb, int cb){
- 		int block = fb*jpg_width+cb;
- 		int size = compressed_blocks[block].size();
-		for(int i = 0;i< size && i < bytes_huffman[block].size();i+=1){
-			if(compressed_blocks[block][i][0]!='\0' && bytes_huffman[block][i]>0){
-				int bytes_b = bytes_before_huffman[block][i];
-				int bytes_h = bytes_huffman[block][i];
-				unsigned char* c = (unsigned char*)malloc(sizeof(unsigned char)*bytes_b);
-				cout << "DESCOMPRIMIR... ";
-				getchar();
-				Huffman_Uncompress(compressed_blocks[block][i], c,  bytes_h, bytes_b);
-				cout << "DESCOMPRIMIÓ!!!";
-				getchar();
-				compressed_blocks[block][i] = c;
-			}
-			else{
-				compressed_blocks[block][i] = generateEmpty();
+	void generateImage(){
+		new_list.clear();
+		for (int i = 0; i < image.size(); i+=1){
+			for (int j = 0; j < image[i].size(); j+=1){
+				vector<int> channels;
+				for(int c = 0; c < image[i][j].size(); c+=1)
+					channels.push_back((int)image[i][j][c]);
+				DataBlock* block = new DataBlock(image[i][j].size(),channels,1,1);
+				new_list.push_back(block);
 			}
 		}
 	}
@@ -415,162 +508,30 @@ private:
 	*
 	****************************************************************/
 
-	void generateDatabytestream(){
-		for (int f = 0; f < compressed_blocks.size(); f+=1){
-			for (int c = 0; c < compressed_blocks[f].size(); c+=1){
-				int byte = bytes_huffman[f][c];
-				DataByteStream* db = new DataByteStream(compressed_blocks[f][c],byte);
-				new_list.push_back(db);
-			}
-		}
-	}
-
-	void reduceZerosToAll(){
-		for (int f = 0; f < jpg_height; f+=1){
-			for (int c = 0; c < jpg_width; c+=1){
-				reduceZeros(f,c);
-			}
-		}
-	}
-
-	void reduceZeros(int fb, int cb){
-		int block = fb*jpg_width+cb;
-		vector<double> without_zero_r;
-		without_zero_r.resize(64,0.0);
-		vector<double> without_zero_g;
-		without_zero_g.resize(64,0.0);
-		vector<double> without_zero_b;
-		without_zero_b.resize(64,0.0);
-		//USAR ZIGZAG!!!
-		for (int f = 0; f < 8; f+=1){
-			for (int c = 0; c < 8; c+=1){
-				int pos = zigzag[(f*8)+c];
-				without_zero_r[pos] = (dct_r[block][f][c]);
-				without_zero_g[pos] = (dct_g[block][f][c]);
-				without_zero_b[pos] = (dct_b[block][f][c]);
-			}
-		}
-		 y_data.push_back(clearZero(without_zero_r));
-		cr_data.push_back(clearZero(without_zero_g));
-		cb_data.push_back(clearZero(without_zero_b));
-	}
-
-	vector<double> clearZero(vector<double> v){
-		for (int i = 0; i < v.size(); i+=1){
-			if(isEmpty(i,v))
-				v.resize(i+1);
-		}
-		return v;
-	}
-
-	bool isEmpty(int pos, vector <double> v){
-		for (int i = pos; i < v.size(); i+=1){
-			if(v[i]!=0.0)
-				return false;
-		}
-		return true;
-	}
-
-	void applyHuffmanToAll(){
-		for (int f = 0; f < jpg_height; f+=1){
-			for (int c = 0; c < jpg_width; c+=1){
-				applyHuffman(f,c);
-			}
-		}
-	}
-
-	void applyHuffman(int fb, int cb){
-		int block = fb*jpg_width+cb;
-		vector<unsigned char*> huffman;
-		vector<int> bytes_before;
-		vector<int> bytes;
-		int rbyte;
-		int gbyte;
-		int bbyte;
-		unsigned char* r = (unsigned char*)malloc(sizeof(unsigned char)*y_data[block].size());
-		unsigned char* g = (unsigned char*)malloc(sizeof(unsigned char)*cr_data[block].size());
-		unsigned char* b = (unsigned char*)malloc(sizeof(unsigned char)*cb_data[block].size());
-
-		for (int i = 0; i < y_data[block].size(); i+=1){
-			r[i] = static_cast<unsigned>(y_data[block][i]);
-		}
-		for (int i = 0; i < cr_data[block].size(); i+=1){
-			g[i] = static_cast<unsigned>(cr_data[block][i]);
-		}
-		for (int i = 0; i < cb_data[block].size(); i+=1){
-			b[i] = static_cast<unsigned>(cb_data[block][i]);
-		}
-		unsigned char* cr = (unsigned char*)malloc(sizeof(unsigned char)*64);
-		unsigned char* cg = (unsigned char*)malloc(sizeof(unsigned char)*64);
-		unsigned char* c_b = (unsigned char*)malloc(sizeof(unsigned char)*64);
-		//unsigned char* cr,cg,c_b;
-
-		rbyte = Huffman_Compress(r,cr,y_data[block].size());
-		gbyte = Huffman_Compress(g,cg,cr_data[block].size());
-		bbyte = Huffman_Compress(b,c_b,cb_data[block].size());
-
-		bytes_before.push_back(y_data[block].size());
-		huffman.push_back(cr);
-		bytes.push_back(rbyte);
-
-		bytes_before.push_back(cr_data[block].size());
-		huffman.push_back(cg);
-		bytes.push_back(gbyte);
-
-		bytes_before.push_back(cb_data[block].size());
-		huffman.push_back(c_b);
-		bytes.push_back(bbyte);
-
-		compressed_blocks.push_back(huffman);
-		bytes_huffman.push_back(bytes);
-		bytes_before_huffman.push_back(bytes_before);
-	}
-
-	void readImage(vector<DataType *> *list, HEAD *header){
-		jpg_width = (header->w*header->wb)/8;
-		jpg_height = (header->h*header->hb)/8;
-		if((header->w*header->wb)%8>0)
-			jpg_width+=1;
-		if((header->h*header->hb)%8>0)
-			jpg_height+=1;
-		/* EN ESTA PARTE SIMULO ALGUNOS VALORES */
-			quality = 80;
-			//type_subsampling = 1;
-		/*  FIN SIMULADOS  */
-		image.resize(header->h*header->hb);
+	void readImage(vector<DataType *> *list, HEAD* header){
+		image.resize(image_height);
 		for (int i = 0; i < image.size(); i+=1){
-			image[i].resize(header->w*header->wb);
+			image[i].resize(image_width);
 		}
 		int w_block = 0;
 		int h_block = 0;
 		int chnl_block = 0;
-		int* head_block = NULL;
-		vector<Pixel> *block = NULL;
-		vector<int> aux;
-		vector<double> last_w;
 		int pos = 0;
-		int flag = 0;
 		for (int i = 0; i < header->h; i+=1){
 			for (int j = 0; j < header->w; j+=1){
 				pos = (i*(header->h))+j;
-				if(pos < list->size()){
-					head_block = list->at(pos)->getContent();
-					w_block = head_block[2];
-					h_block = head_block[1];
-					chnl_block = head_block[3];
-					//Here, we read each block inside in the list
-					block = (vector<Pixel>*)list->at(pos)->getExtras();
-					for(int f = 0; f < h_block; f+=1){
-						for(int c = 0;c < w_block; c+=1){
-							vector<double> rgb;
-							flag+=1;
-							aux = block->at((f*h_block)*c).getChannels();
-							for (int x = 0; x < chnl_block && x < aux.size(); x+=1){
-								rgb.push_back(round(aux[x]+0.0));
-							}
-							image[(i*h_block)+f][(j*w_block)+c]=rgb;
-							//int pos_img = ((i*header->h)+(j*h_block*w_block))+(f*h_block)+c;
-							//image[pos_img]=rgb;
+				int* head_block = list->at(pos)->getContent();
+				h_block = head_block[1];
+				w_block = head_block[2];
+				chnl_block = head_block[3];
+				//Here, we read each block inside in the list
+				vector<Pixel> *block = (vector<Pixel>*)list->at(pos)->getExtras();
+				for(int f = 0; f < h_block; f+=1){
+					for(int c = 0;c < w_block; c+=1){
+						Pixel px = block->at((f*h_block)+c);
+						vector<int> aux = px.getChannels();
+						for (int x = 0; x < chnl_block && x < aux.size(); x+=1){
+							image[(i*h_block)+f][(j*w_block)+c].push_back(aux[x]);
 						}
 					}
 				}
@@ -578,40 +539,139 @@ private:
 		}
 	}
 
-	void generateBlocks(){
-		for (int i = 0; i < image.size(); i+=1){
-			if(extra_w>0){
-				int pos = 0;
+	void generateExtraPixels(){
+		if(extra_w>0){
+			for (int i = 0; i < image.size(); i+=1){
 				int j=image[i].size();
-				while(pos<extra_h){
+				image[i].resize(j+extra_w);
+				for(int pos = 0; pos<extra_w; pos+=1){
 					vector <double> rgb;
 					for(int x =0; x < image[i][j-1].size();x+=1){
 						rgb.push_back(image[i][j-1][x]);
 					}
-					image[i].push_back(rgb);
-					pos+=1;
+					image[i][j+pos]=rgb;
 				}
 			}
 		}
 		if(extra_h>0){
-			int pos = 0;
-			int j=image.size();
-			while(pos<extra_h){
+			int i=image.size();
+			image.resize(i+extra_h);
+			for(int pos=0; pos < extra_h; pos+=1){
 				vector< vector <double>> aux;
-				for (int i = 0; i < image[j-1].size(); i+=1){
+				for (int j = 0; j < image[i-1].size(); j+=1){
 					vector <double> rgb;
-					for(int x =0; x < image[j-1][i].size();x+=1){
-						rgb.push_back(image[j-1][i][x]);
+					for(int x =0; x < image[i-1][j].size();x+=1){
+						rgb.push_back(image[i-1][j][x]);
 					}
 					aux.push_back(rgb);
 				}
-				image.push_back(aux);
-				pos+=1;
+				image[i+pos]=aux;
 			}
 		}
 	}
 
-	void generateAllDCT(){
+	vector<double> RGB_to_YCC(vector<double> rgb){ //[0]=R [1]=G [2]=B
+		/*
+		double Y  = (0.299    *rgb[0]) + (0.587  *rgb[1]) + (0.114  *rgb[2])-128;
+		double Cb = (- 0.1687 *rgb[0]) - (0.3313 *rgb[1]) + (0.5    *rgb[2]);
+		double Cr = (0.5      *rgb[0]) - (0.4187 *rgb[1]) - (0.0813 *rgb[2]);
+		*/
+		double Y  = (0.257    *rgb[0]) + (0.504  *rgb[1]) + (0.098  *rgb[2]) + 16;
+		double Cb = (- 0.148  *rgb[0]) - (0.291  *rgb[1]) + (0.439  *rgb[2]) + 128;
+		double Cr = (0.439    *rgb[0]) - (0.368  *rgb[1]) - (0.071  *rgb[2]) + 128;
+		
+		Y -= 128;
+		Cb -= 128;
+		Cr -= 128;
+
+		vector<double> ycc;
+		ycc.push_back(Y);
+		ycc.push_back(Cb);
+		ycc.push_back(Cr);
+		return ycc;
+	}
+
+	double RGB_to_Y(vector<double> rgb){
+	    //double Y = rgb[0]*0.299 + rgb[0]*0.587 + rgb[0]*0.114 - 128.0;
+	    double Y  = 0.257    *rgb[0] + 0.504  *rgb[0] + 0.098  *rgb[0] + 16;
+		return Y-128;
+	}
+
+	vector<double> Y_to_YCC(double element){
+	    double Y  = element;
+		double Cb = 0;
+		double Cr = 0;
+		vector<double> YCC;
+		YCC.push_back(Y);
+		YCC.push_back(Cb);
+		YCC.push_back(Cr);
+		return YCC;
+	}
+
+	void convertColorSpace(){
+		for(int i=0;i<image.size();i+=1){
+			for(int j=0;j<image[i].size();j+=1){
+				if(image[i][j].size()==3){
+					image[i][j] = RGB_to_YCC(image[i][j]);
+				}
+				if(image[i][j].size()==1){
+					double y = RGB_to_Y(image[i][j]);
+					image[i][j] = Y_to_YCC(y);
+				}
+			}
+		}
+	}
+
+	void calculateDCT(int fb, int cb){
+		int pos = (fb*jpg_width)+cb;
+		vector< vector<double>> dr;
+		vector< vector<double>> dg;
+		vector< vector<double>> db;
+		dct_r.resize(jpg_width*jpg_height);
+		dct_g.resize(jpg_width*jpg_height);
+		dct_b.resize(jpg_width*jpg_height);
+		dr.resize(8);
+		dg.resize(8);
+		db.resize(8);
+		double Cu, Cv;
+		for (int i = 0; i < 8; i+=1){
+			dr[i].resize(8,0);
+			dg[i].resize(8,0);
+			db[i].resize(8,0);
+		}
+		for (int u = 0; u < 8; u+=1){
+			for (int v = 0; v < 8; v+=1){
+				if (u == 0) {
+                	Cu = 1.0 / sqrt(2.0);
+	            } else {
+	                Cu = 1.0;
+	            }
+
+	            if (v == 0) {
+	                Cv = 1.0 / sqrt(2.0);
+	            } else {
+	                Cv = (1.0);
+	            }   
+				for (int x = 0; x < 8; x+=1) {
+		            for (int y = 0; y < 8; y+=1) {
+		            	int row = (fb*8)+x;
+		            	int col = (cb*8)+y;
+		                dr[u][v] += image[row][col][0] * cos( (((2*x)+1)*u*PI)/16 ) * cos( (((2*y)+1)*v*PI)/16 );
+		                dg[u][v] += image[row][col][1] * cos( (((2*x)+1)*u*PI)/16 ) * cos( (((2*y)+1)*v*PI)/16 );
+		                db[u][v] += image[row][col][2] * cos( (((2*x)+1)*u*PI)/16 ) * cos( (((2*y)+1)*v*PI)/16 );
+		            }              
+		        }
+		        dr[u][v] = (0.25) * Cu * Cv * dr[u][v];
+		        dg[u][v] = (0.25) * Cu * Cv * dg[u][v];
+		        db[u][v] = (0.25) * Cu * Cv * db[u][v];
+			}
+		}
+		dct_r[pos]=dr;
+		dct_g[pos]=dg;
+		dct_b[pos]=db;
+	}
+
+	void calculateAllDCT(){
 		for (int f = 0; f < jpg_height; f+=1){
 			for (int c = 0; c < jpg_width; c+=1){
 				calculateDCT(f,c);
@@ -619,19 +679,8 @@ private:
 		}
 	}
 
-	void convertColorSpace(){
-		for(int i=0;i<image.size();i+=1){
-			for(int j=0;j<image[i].size();j+=1){
-				if(image[i][j].size()==3)
-					image[i][j] = RGB_to_YCC(image[i][j]);
-				if(image[i][j].size()==1)
-					image[i][j] = Y_to_YCC(RGB_to_Y(image[i][j]));
-			}
-		}
-	}
-
 	void computeQuantizationTable(){
-		float q;
+		double q;
 	    if (quality < 50) {
 	        q = 5000.0 / quality;
 	    } else {
@@ -645,7 +694,23 @@ private:
 	    // DC quantized worse than 8 makes overall quality fall off the cliff
 	    if (quantization_table[0] > 8) quantization_table[0] = (quantization_table[0]+8*3)/4;
 	    if (quantization_table[1] > 24) quantization_table[1] = (quantization_table[1]+24)/2;
-	    if (quantization_table[2] > 24) quantization_table[2] = (quantization_table[2]+24)/2;
+	    if (quantization_table[2] > 24) quantization_table[2] = (quantization_table[2]+24)/2;    
+	}
+
+	void quantizateDCT(int fb, int cb){
+		int pos = (fb*jpg_width)+cb;
+		for (int f = 0; f < 8; f+=1){
+			for (int c = 0; c < 8; c+=1){
+				int x = (f*8)+c;
+				dct_r[pos][f][c] = roundToZero(dct_r[pos][f][c],quantization_table[x]);
+				dct_g[pos][f][c] = roundToZero(dct_g[pos][f][c],quantization_table[x]);
+				dct_b[pos][f][c] = roundToZero(dct_b[pos][f][c],quantization_table[x]);
+				
+				//dct_r[pos][f][c] = round(dct_r[pos][f][c]/quantization_table[x]);
+				//dct_g[pos][f][c] = round(dct_g[pos][f][c]/quantization_table[x]);
+				//dct_b[pos][f][c] = round(dct_b[pos][f][c]/quantization_table[x]);
+			}
+		}
 	}
 
 	void quantizateAllDCT(){
@@ -656,95 +721,206 @@ private:
 		}
 	}
 
-	void quantizateDCT(int fb, int cb){
-		int pos = fb*jpg_width+cb;
-		for (int f = 0; f < 8; f+=1){
-			for (int c = 0; c < 8; c+=1){
-				int x = (f*8)+c;
-				dct_r[pos][f][c] = round(dct_r[pos][f][c] / quantization_table[x]);
-				dct_g[pos][f][c] = round(dct_g[pos][f][c] / quantization_table[x]);
-				dct_b[pos][f][c] = round(dct_b[pos][f][c] / quantization_table[x]);
+	vector<double> clearZero(vector<double> v){
+		for (int i = 0; i < v.size(); i+=1){
+			if(isEmpty(i,v))
+				v.resize(i);
+		}
+		return v;
+	}
+
+	void reduceZeros(int fb, int cb){
+		int block = (fb*jpg_width)+cb;
+		vector<double> without_zero_r;
+		without_zero_r.resize(64,0);
+		vector<double> without_zero_g;
+		without_zero_g.resize(64,0);
+		vector<double> without_zero_b;
+		without_zero_b.resize(64,0);
+		//USE ZIGZAG!!!
+		for (int i = 0; i < 64; i+=1){
+			int pos = zigzag[i];
+			int col = pos%8;
+			int row = pos/8;
+			without_zero_r[i] = dct_r[block][row][col];
+			without_zero_g[i] = dct_g[block][row][col];
+			without_zero_b[i] = dct_b[block][row][col];
+		}
+		without_zero_r = clearZero(without_zero_r);
+		y_data.push_back(without_zero_r);
+		without_zero_g = clearZero(without_zero_g);
+		cb_data.push_back(without_zero_g);
+		without_zero_b = clearZero(without_zero_b);
+		cr_data.push_back(without_zero_b);
+	}
+
+	void reduceZerosToAll(){
+		for (int f = 0; f < jpg_height; f+=1){
+			for (int c = 0; c < jpg_width; c+=1){
+				reduceZeros(f,c);
 			}
 		}
 	}
 
-/* AQUIIII */
-	void calculateDCT(int fb, int cb){
-		vector< vector<double>> dr;
-		vector< vector<double>> dg;
-		vector< vector<double>> db;
-		dr.resize(8);
-		dg.resize(8);
-		db.resize(8);
-		double Cu, Cv;
+	void calculateDC(int fb, int cb){
+		vector <double> total;
+		double prom_r=0,prom_g=0,prom_b=0;
 		for (int i = 0; i < 8; i+=1){
-			dr[i].resize(8);
-			dg[i].resize(8);
-			db[i].resize(8);
-		}
-		for (int f = 0; f < 8; f+=1){
-			for (int c = 0; c < 8; c+=1){
-				dr[f][c] = 0.0;
-				dg[f][c] = 0.0;
-				db[f][c] = 0.0;
-				if (f == 0) {
-                	Cu = 1.0 / sqrt(2.0);
-	            } else {
-	                Cu = 1.0;
-	            }
-
-	            if (c == 0) {
-	                Cv = 1.0 / sqrt(2.0);
-	            } else {
-	                Cv = (1.0);
-	            }   
-				for (int i = 0; i < 8; i+=1) {
-		            for (int j = 0; j < 8; j+=1) {
-		            	int row = (fb*8)+i;
-		            	int col = (cb*8)+j;
-		            	//int pos = ((fb*sqrt(image.size()))+(cb*64))+(i*8)+j;
-		                //dr[f][c] += image[pos][0] * cos(M_PI/((float)8)*(f+1./2.)*i) * cos(M_PI/((float)8)*(c+1./2.)*j);
-		                dr[f][c] += image[row][col][0] * cos( (((2*i)+1)*f*PI)/16 ) * cos( (((2*j)+1)*c*PI)/16 );
-		                dg[f][c] += image[row][col][1] * cos( (((2*i)+1)*f*PI)/16 ) * cos( (((2*j)+1)*c*PI)/16 );
-		                db[f][c] += image[row][col][2] * cos( (((2*i)+1)*f*PI)/16 ) * cos( (((2*j)+1)*c*PI)/16 );
-		            }              
-		        }
-		        dr[f][c] = round((0.25) * Cu * Cv * dr[f][c]);
-		        dg[f][c] = round((0.25) * Cu * Cv * dg[f][c]);
-		        db[f][c] = round((0.25) * Cu * Cv * db[f][c]);
+			for (int j = 0; j < 8; j+=1){
+				prom_r += dct_r[(fb*jpg_width)+cb][i][j];
+				prom_g += dct_g[(fb*jpg_width)+cb][i][j];
+				prom_b += dct_b[(fb*jpg_width)+cb][i][j];
 			}
 		}
-		dct_r.push_back(dr);
-		dct_g.push_back(dg);
-		dct_b.push_back(db);
+		prom_r /= 64;
+		prom_g /= 64;
+		prom_b /= 64;
+
+		if(fb==0 && cb==0){
+			prom_r = 0 + prom_r;
+			prom_g = 0 + prom_g;
+			prom_b = 0 + prom_b;
+		}
+		else{
+			prom_r = (prom_r - dc_coef.back()[0]);
+			prom_g = (prom_g - dc_coef.back()[1]);
+			prom_b = (prom_b - dc_coef.back()[2]);
+		}
+
+		total.push_back(prom_r);
+		total.push_back(prom_g);
+		total.push_back(prom_b);
+		dc_coef.push_back(total);
 	}
 
-	vector<double> RGB_to_YCC(vector<double> rgb){ //[0]=R [1]=G [2]=B
-		double Y  = 0.299    *rgb[0] + 0.587  *rgb[1] + 0.114  *rgb[2]- 128.0;
-		double Cb = - 0.1687 *rgb[0] - 0.3313 *rgb[1] + 0.5    *rgb[2];
-		double Cr = 0.5      *rgb[0] - 0.4187 *rgb[1] - 0.0813 *rgb[2];
-		vector<double> YCC;
-		YCC.push_back(Y);
-		YCC.push_back(Cb);
-		YCC.push_back(Cr);
-		return YCC;
+	void applyHuffman(int fb, int cb){
+		int block = (fb*jpg_width)+cb;
+		calculateDC(fb,cb);
+		vector<unsigned char*> huffman;
+		vector<int> bytes_before;
+		vector<int> bytes;
+		vector< vector<int> > negative_block;
+
+		vector<int> negative_y;
+		vector<int> negative_cb;
+		vector<int> negative_cr;
+
+		negative_y.resize(65,0);
+		negative_cb.resize(65,0);
+		negative_cr.resize(65,0);
+
+		int ybyte;
+		int cbbyte;
+		int crbyte;
+		unsigned char* o_y = (unsigned char*)malloc(sizeof(unsigned char)*(y_data[block].size()+1));
+		unsigned char* o_cb = (unsigned char*)malloc(sizeof(unsigned char)*(cb_data[block].size()+1));
+		unsigned char* o_cr = (unsigned char*)malloc(sizeof(unsigned char)*(cr_data[block].size()+1));
+		int extra_byte_y = 0;
+		for (int i = 0; i < y_data[block].size(); i+=1){
+			if((y_data[block][i])<0){
+				negative_y[i+1]= floor((double)((y_data[block][i])/256));
+				extra_byte_y += floor((double)((y_data[block][i])/256));
+			}
+			if((y_data[block][i])>255){
+				negative_y[i+1]=floor((double)((y_data[block][i])/256));
+				extra_byte_y += floor((double)((y_data[block][i])/256));
+			}
+			o_y[i+1] = static_cast<unsigned char>(round(y_data[block][i]));
+		}
+		int extra_byte_cb = 0;
+		for (int i = 0; i < cb_data[block].size(); i+=1){
+			if((cb_data[block][i])<0){
+				negative_cb[i+1]= floor((double)((cb_data[block][i])/256));
+				extra_byte_cb += floor((double)((cb_data[block][i])/256));
+			}
+			if((cb_data[block][i])>255){
+				negative_cb[i+1]=floor((double)((cb_data[block][i])/256));
+				extra_byte_cb+= floor((double)((cb_data[block][i])/256));
+			}
+			o_cb[i+1] = static_cast<unsigned char>(round(cb_data[block][i]));
+			//cout << round(cb_data[block][i]) << "\t";
+		}
+		int extra_byte_cr = 0;
+		for (int i = 0; i < cr_data[block].size(); i+=1){
+			if((cr_data[block][i])<0){
+				negative_cr[i+1]= floor((double)((cr_data[block][i])/256));
+				extra_byte_cr+= floor((double)((cr_data[block][i])/256));
+			}
+			if((cr_data[block][i])>255){
+				negative_cr[i+1]= floor((double)((cr_data[block][i])/256));
+				extra_byte_cr+= floor((double)((cr_data[block][i])/256));
+			}
+			o_cr[i+1] = static_cast<unsigned char>(round(cr_data[block][i]));
+			//cout << round(cr_data[block][i]) << "\t";
+		}
+
+		o_y[0] = round(dc_coef[block][0]);
+		o_cb[0] = round(dc_coef[block][1]);
+		o_cr[0] = round(dc_coef[block][2]);
+
+		unsigned char* h_y = (unsigned char*)malloc(sizeof(unsigned char)*(100));
+		unsigned char* h_cb = (unsigned char*)malloc(sizeof(unsigned char)*(100));
+		unsigned char* h_cr = (unsigned char*)malloc(sizeof(unsigned char)*(100));
+ 
+		negative_block.push_back(negative_y);
+		negative_block.push_back(negative_cb);
+		negative_block.push_back(negative_cr);
+
+		ybyte = Huffman_Compress(o_y,h_y,y_data[block].size()+1);
+		cbbyte = Huffman_Compress(o_cb,h_cb,cb_data[block].size()+1);
+		crbyte = Huffman_Compress(o_cr,h_cr,cr_data[block].size()+1);
+
+		bytes_before.push_back(y_data[block].size());
+		huffman.push_back(h_y);
+		bytes.push_back(ybyte);
+
+		bytes_before.push_back(cb_data[block].size());
+		huffman.push_back(h_cb);
+		bytes.push_back(cbbyte);
+
+		bytes_before.push_back(cr_data[block].size());
+		huffman.push_back(h_cr);
+		bytes.push_back(crbyte);
+
+		compressed_blocks.push_back(huffman);
+		bytes_huffman.push_back(bytes);
+		bytes_before_huffman.push_back(bytes_before);
+		negative_position.push_back(negative_block);
 	}
 
-	double RGB_to_Y(vector<double> rgb){
-	    double Y = rgb[0]*0.299 + rgb[0]*0.587 + rgb[0]*0.114 - 128.0;
-		return Y;
+	void applyHuffmanToAll(){
+		for (int f = 0; f < jpg_height; f+=1){
+			for (int c = 0; c < jpg_width; c+=1){
+				applyHuffman(f,c);
+			}
+		}
 	}
 
-	vector<double> Y_to_YCC(double element){
-	    double Y  = element - 128.0;
-		double Cb = 0;
-		double Cr = 0;
-		vector<double> YCC;
-		YCC.push_back(Y);
-		YCC.push_back(Cb);
-		YCC.push_back(Cr);
-		return YCC;
+	void generateDatabytestream(){
+		int hbyte = 0;
+		int obyte = 0;
+		for (int f = 0; f < compressed_blocks.size(); f+=1){
+			for (int c = 0; c < compressed_blocks[f].size(); c+=1){
+				hbyte = bytes_huffman[f][c];
+				obyte = bytes_before_huffman[f][c];
+				DataByteStream* db = new DataByteStream(compressed_blocks[f][c],obyte,hbyte);
+				new_list.push_back(db);
+			}
+		}
+		bytes_huffman.clear();
+		bytes_before_huffman.clear();
 	}
+
+	double roundToZero(double j, int quant){
+		if (j < 0) {
+	        double jtmp = -j + (quant >> 1);
+	        return (jtmp < quant) ? 0 : static_cast<double>(-(jtmp / quant));
+	    } else {
+	        double jtmp = j + (quant >> 1);
+	        return (jtmp < quant) ? 0 : static_cast<double>((jtmp / quant));
+	    }
+	}
+
 
 };
 

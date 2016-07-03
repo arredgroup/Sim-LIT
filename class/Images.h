@@ -144,6 +144,7 @@ public:
 	    }
 	    if(show_data)
 	    	cout << "Image Loaded...\n";
+	    //free(img);
 	}
 
 	int getWidthBlock(){

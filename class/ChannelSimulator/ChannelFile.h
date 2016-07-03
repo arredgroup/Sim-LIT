@@ -41,7 +41,7 @@ public:
 			return list;
 		}
 		string file = this->getExtras()[0];
-		//file = "files/"+file;
+		//file = "../../"+file;
 		fp.open(file.c_str());
 		//cout << "Simulating Loss...\n";
 		vector<string> array;
@@ -65,7 +65,10 @@ public:
 			    if(opc==0)
 					list = deletePackageById(element,list);
 			}
-		fp.close();
+			fp.close();
+		}
+		else{
+			cout << "File Can't open\n";
 		}
 		return list; 
 	}

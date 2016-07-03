@@ -16,6 +16,7 @@
 #include <sstream>
 #include "header.h"
 #include "structs.h"
+#include <strings.h>
 
 
 
@@ -83,9 +84,6 @@ using namespace std;
 				return 0;
 			}
 		}
-		/*for (int i = 0; i < list.size(); ++i){
-				cout << *(static_cast<unsigned char *>(list.at(i)->getExtras())) << "--";
-			}	*/
 		vector<Package> pkgs;
 		if(pkgSrc.size()>0){
 			pkgs = pktz->imgToPackageList(list,package_size,show_data, (void*)pkgSrc.c_str());
