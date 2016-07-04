@@ -9,3 +9,7 @@
 ./simlit -image-name src/8.bmp -forward-method 1 jpg-compressor 2 79 h1v1 -packetizer-method 50 normal-packetizer -rebuilder-method rebuilder-average-opt -metric 1 metric-psnr -export-result resultados.txt -folder experiment_two -show-data-screen -export-images
 
 ./simlit -image-name src/6.bmp -forward-method 1 jpg-compressor 2 90 h1v1 -packetizer-method 50 normal-packetizer -rebuilder-method rebuilder-average-opt -metric 1 metric-psnr -export-result resultados.txt -folder experiment_two -show-data-screen -export-images
+
+./simlit -image-name src/1.bmp -packetizer-method 17000 file-packetizer files/patronP1.txt -channel-method lost-from-file 1 files/loss-file20P1.loss -rebuilder-method rebuilder-average-opt -metric 1 metric-psnr -export-result resultados.txt -folder experiment_two -show-data-screen -export-images -width-block 128 -height-block 128
+
+./simlit -image-name src/1.bmp -packetizer-method 50000 file-packetizer files/demo.txt -channel-method lost-from-file 1 files/lossfile_5.loss -rebuilder-method rebuilder-average-opt -metric 1 metric-psnr -export-result resultados.txt -folder experiment_two -show-data-screen -export-images -width-block 128 -height-block 128

@@ -26,8 +26,6 @@ private:
 
 	bool proceed;
 
-	const double PI  =3.141592653589793238463;
-
 	int jpg_width;
 	int jpg_height;
 
@@ -60,8 +58,6 @@ private:
 	vector< vector<int > > bytes_before_huffman;
 	vector< vector<int > > bytes_huffman;
 	vector< vector< vector<int > > > negative_position;
-
-	vector< vector<double> > dc_coef;
 
 	vector<DataType *> new_list;
 
@@ -257,11 +253,11 @@ private:
 		int block = (fb*jpg_width)+cb;
 		int size = 0;
 		vector<double> with_zero_r;
-		with_zero_r.resize(65,0);
+		with_zero_r.resize(64,0);
 		vector<double> with_zero_g;
-		with_zero_g.resize(65,0);
+		with_zero_g.resize(64,0);
 		vector<double> with_zero_b;
-		with_zero_b.resize(65,0);
+		with_zero_b.resize(64,0);
 		int i=0;
 		//int pos = 0;
 		unsigned char* uc_r = compressed_blocks[block][0];
@@ -271,7 +267,7 @@ private:
 			if(negative_position[block][0][i]!=0)
 				with_zero_r[i] += (256*negative_position[block][0][i]);
 		}
-		while(i<65){
+		while(i<64){
 			with_zero_r[i]=0;
 			i+=1;
 		}
@@ -282,7 +278,7 @@ private:
 			if(negative_position[block][1][i]!=0)
 				with_zero_g[i] += (256*negative_position[block][1][i]);
 		}
-		while(i<65){
+		while(i<64){
 			with_zero_g[i]=0;
 			i+=1;
 		}
@@ -293,26 +289,10 @@ private:
 			if(negative_position[block][2][i]!=0)
 				with_zero_b[i] += (256*negative_position[block][2][i]);
 		}
-		while(i<65){
+		while(i<64){
 			with_zero_b[i]=0;
 			i+=1;
 		}
-		double dc_r = with_zero_r[0];
-		with_zero_r.erase(with_zero_r.begin());
-		double dc_g = with_zero_g[0];
-		with_zero_g.erase(with_zero_g.begin());
-		double dc_b = with_zero_b[0];
-		with_zero_b.erase(with_zero_b.begin());	
-
-		vector<double> d_coef;
-
-		d_coef.push_back(dc_r);
-		d_coef.push_back(dc_g);
-		d_coef.push_back(dc_b);
-
-		dc_coef.push_back(d_coef);
-
-
 
 		for (int i = 0; i < 64; i+=1){
 			int pos = zigzag[i];
@@ -321,24 +301,6 @@ private:
 			dct_r[block][row][col] = with_zero_r[i];
 			dct_g[block][row][col] = with_zero_g[i];
 			dct_b[block][row][col] = with_zero_b[i];
-		}
-	}
-
-	void checkDC(){
-		double dc_r = 0;
-		double dc_g = 0;
-		double dc_b = 0;
-		for (int i = 0; i < jpg_height; i+=1){
-			for(int j = 0;j < jpg_width; j+=1){
-				if(j==0 && i==0){
-					dc_coef[(i*jpg_height)+j][0] = dc_coef[(i*jpg_height)+j][0] + dc_r;
-					dc_coef[(i*jpg_height)+j][1] = dc_coef[(i*jpg_height)+j][1] + dc_g;
-					dc_coef[(i*jpg_height)+j][2] = dc_coef[(i*jpg_height)+j][2] + dc_b;
-				}
-				else{
-					dc_coef[(i*jpg_height)+j][0] = dc_coef[(i*jpg_height)+j-1][0] + dc_g;
-				}
-			}
 		}
 	}
 
@@ -413,26 +375,19 @@ private:
 			            } else {
 			                Cv = 1;
 			            }  
-		                dr[x][y] += Cu * Cv * dct_r[pos][u][v] * cos( (((2*x)+1)*u*PI)/16 ) * cos( (((2*y)+1)*v*PI)/16 );
-		                dg[x][y] += Cu * Cv * dct_g[pos][u][v] * cos( (((2*x)+1)*u*PI)/16 ) * cos( (((2*y)+1)*v*PI)/16 );
-		                db[x][y] += Cu * Cv * dct_b[pos][u][v] * cos( (((2*x)+1)*u*PI)/16 ) * cos( (((2*y)+1)*v*PI)/16 );
+		                dr[x][y] += Cu * Cv * dct_r[pos][u][v] * cos( (((2*x)+1)*u*M_PI)/16 ) * cos( (((2*y)+1)*v*M_PI)/16 );
+		                dg[x][y] += Cu * Cv * dct_g[pos][u][v] * cos( (((2*x)+1)*u*M_PI)/16 ) * cos( (((2*y)+1)*v*M_PI)/16 );
+		                db[x][y] += Cu * Cv * dct_b[pos][u][v] * cos( (((2*x)+1)*u*M_PI)/16 ) * cos( (((2*y)+1)*v*M_PI)/16 );
 		            }             
 		        }
-		        dr[x][y] = 0.25 * dr[x][y];
-		        dg[x][y] = 0.25 * dg[x][y];
-		        db[x][y] = 0.25 * db[x][y];
+		        dr[x][y] = round(0.25 * dr[x][y]);
+		        dg[x][y] = round(0.25 * dg[x][y]);
+		        db[x][y] = round(0.25 * db[x][y]);
 				image[(fb*8)+x][(cb*8)+y].push_back(dr[x][y]);
 				image[(fb*8)+x][(cb*8)+y].push_back(dg[x][y]);
 				image[(fb*8)+x][(cb*8)+y].push_back(db[x][y]);
 			}
-		}/*
-		for (int x = 0; x < 8; x+=1){
-			for (int y = 0; y < 8; y+=1){
-				cout << "[" << dr[x][y] << "," << dg[x][y] << "," << db[x][y] <<"]\t";
-			}
-			cout << "\n";
 		}
-		cout << "\n";*/
 	}
 
 	void calculateAllIDCT(){
@@ -571,14 +526,10 @@ private:
 	}
 
 	vector<double> RGB_to_YCC(vector<double> rgb){ //[0]=R [1]=G [2]=B
-		/*
-		double Y  = (0.299    *rgb[0]) + (0.587  *rgb[1]) + (0.114  *rgb[2])-128;
-		double Cb = (- 0.1687 *rgb[0]) - (0.3313 *rgb[1]) + (0.5    *rgb[2]);
-		double Cr = (0.5      *rgb[0]) - (0.4187 *rgb[1]) - (0.0813 *rgb[2]);
-		*/
-		double Y  = (0.257    *rgb[0]) + (0.504  *rgb[1]) + (0.098  *rgb[2]) + 16;
-		double Cb = (- 0.148  *rgb[0]) - (0.291  *rgb[1]) + (0.439  *rgb[2]) + 128;
-		double Cr = (0.439    *rgb[0]) - (0.368  *rgb[1]) - (0.071  *rgb[2]) + 128;
+
+		double Y  = round((0.257    *rgb[0]) + (0.504  *rgb[1]) + (0.098  *rgb[2]) + 16 );
+		double Cb = round((- 0.148  *rgb[0]) - (0.291  *rgb[1]) + (0.439  *rgb[2]) + 128);
+		double Cr = round((0.439    *rgb[0]) - (0.368  *rgb[1]) - (0.071  *rgb[2]) + 128);
 		
 		Y -= 128;
 		Cb -= 128;
@@ -656,14 +607,14 @@ private:
 		            for (int y = 0; y < 8; y+=1) {
 		            	int row = (fb*8)+x;
 		            	int col = (cb*8)+y;
-		                dr[u][v] += image[row][col][0] * cos( (((2*x)+1)*u*PI)/16 ) * cos( (((2*y)+1)*v*PI)/16 );
-		                dg[u][v] += image[row][col][1] * cos( (((2*x)+1)*u*PI)/16 ) * cos( (((2*y)+1)*v*PI)/16 );
-		                db[u][v] += image[row][col][2] * cos( (((2*x)+1)*u*PI)/16 ) * cos( (((2*y)+1)*v*PI)/16 );
+		                dr[u][v] += image[row][col][0] * cos( (((2*x)+1)*u*M_PI)/16 ) * cos( (((2*y)+1)*v*M_PI)/16 );
+		                dg[u][v] += image[row][col][1] * cos( (((2*x)+1)*u*M_PI)/16 ) * cos( (((2*y)+1)*v*M_PI)/16 );
+		                db[u][v] += image[row][col][2] * cos( (((2*x)+1)*u*M_PI)/16 ) * cos( (((2*y)+1)*v*M_PI)/16 );
 		            }              
 		        }
-		        dr[u][v] = (0.25) * Cu * Cv * dr[u][v];
-		        dg[u][v] = (0.25) * Cu * Cv * dg[u][v];
-		        db[u][v] = (0.25) * Cu * Cv * db[u][v];
+		        dr[u][v] = round(0.25 * Cu * Cv * dr[u][v]);
+		        dg[u][v] = round(0.25 * Cu * Cv * dg[u][v]);
+		        db[u][v] = round(0.25 * Cu * Cv * db[u][v]);
 			}
 		}
 		dct_r[pos]=dr;
@@ -705,10 +656,6 @@ private:
 				dct_r[pos][f][c] = roundToZero(dct_r[pos][f][c],quantization_table[x]);
 				dct_g[pos][f][c] = roundToZero(dct_g[pos][f][c],quantization_table[x]);
 				dct_b[pos][f][c] = roundToZero(dct_b[pos][f][c],quantization_table[x]);
-				
-				//dct_r[pos][f][c] = round(dct_r[pos][f][c]/quantization_table[x]);
-				//dct_g[pos][f][c] = round(dct_g[pos][f][c]/quantization_table[x]);
-				//dct_b[pos][f][c] = round(dct_b[pos][f][c]/quantization_table[x]);
 			}
 		}
 	}
@@ -762,40 +709,8 @@ private:
 		}
 	}
 
-	void calculateDC(int fb, int cb){
-		vector <double> total;
-		double prom_r=0,prom_g=0,prom_b=0;
-		for (int i = 0; i < 8; i+=1){
-			for (int j = 0; j < 8; j+=1){
-				prom_r += dct_r[(fb*jpg_width)+cb][i][j];
-				prom_g += dct_g[(fb*jpg_width)+cb][i][j];
-				prom_b += dct_b[(fb*jpg_width)+cb][i][j];
-			}
-		}
-		prom_r /= 64;
-		prom_g /= 64;
-		prom_b /= 64;
-
-		if(fb==0 && cb==0){
-			prom_r = 0 + prom_r;
-			prom_g = 0 + prom_g;
-			prom_b = 0 + prom_b;
-		}
-		else{
-			prom_r = (prom_r - dc_coef.back()[0]);
-			prom_g = (prom_g - dc_coef.back()[1]);
-			prom_b = (prom_b - dc_coef.back()[2]);
-		}
-
-		total.push_back(prom_r);
-		total.push_back(prom_g);
-		total.push_back(prom_b);
-		dc_coef.push_back(total);
-	}
-
 	void applyHuffman(int fb, int cb){
 		int block = (fb*jpg_width)+cb;
-		calculateDC(fb,cb);
 		vector<unsigned char*> huffman;
 		vector<int> bytes_before;
 		vector<int> bytes;
@@ -805,70 +720,64 @@ private:
 		vector<int> negative_cb;
 		vector<int> negative_cr;
 
-		negative_y.resize(65,0);
-		negative_cb.resize(65,0);
-		negative_cr.resize(65,0);
+		negative_y.resize(64,0);
+		negative_cb.resize(64,0);
+		negative_cr.resize(64,0);
 
 		int ybyte;
 		int cbbyte;
 		int crbyte;
-		unsigned char* o_y = (unsigned char*)malloc(sizeof(unsigned char)*(y_data[block].size()+1));
-		unsigned char* o_cb = (unsigned char*)malloc(sizeof(unsigned char)*(cb_data[block].size()+1));
-		unsigned char* o_cr = (unsigned char*)malloc(sizeof(unsigned char)*(cr_data[block].size()+1));
+		unsigned char* o_y =  (unsigned char*)malloc(sizeof(unsigned char)* (y_data[block].size()));
+		unsigned char* o_cb = (unsigned char*)malloc(sizeof(unsigned char)*(cb_data[block].size()));
+		unsigned char* o_cr = (unsigned char*)malloc(sizeof(unsigned char)*(cr_data[block].size()));
 		int extra_byte_y = 0;
 		for (int i = 0; i < y_data[block].size(); i+=1){
-			if((y_data[block][i])<0){
-				negative_y[i+1]= floor((double)((y_data[block][i])/256));
-				extra_byte_y += floor((double)((y_data[block][i])/256));
+			if(y_data[block][i]<0){
+				negative_y[i]= floor((double)(y_data[block][i])/256);
+				extra_byte_y += floor((double)(y_data[block][i])/256);
 			}
-			if((y_data[block][i])>255){
-				negative_y[i+1]=floor((double)((y_data[block][i])/256));
-				extra_byte_y += floor((double)((y_data[block][i])/256));
+			if(y_data[block][i]>255){
+				negative_y[i]=floor((double)(y_data[block][i])/256);
+				extra_byte_y += floor((double)(y_data[block][i])/256);
 			}
-			o_y[i+1] = static_cast<unsigned char>(round(y_data[block][i]));
+			o_y[i] = static_cast<unsigned char>(y_data[block][i]);
 		}
 		int extra_byte_cb = 0;
 		for (int i = 0; i < cb_data[block].size(); i+=1){
-			if((cb_data[block][i])<0){
-				negative_cb[i+1]= floor((double)((cb_data[block][i])/256));
-				extra_byte_cb += floor((double)((cb_data[block][i])/256));
+			if(cb_data[block][i]<0){
+				negative_cb[i]= floor((double)(cb_data[block][i])/256);
+				extra_byte_cb += floor((double)(cb_data[block][i])/256);
 			}
-			if((cb_data[block][i])>255){
-				negative_cb[i+1]=floor((double)((cb_data[block][i])/256));
-				extra_byte_cb+= floor((double)((cb_data[block][i])/256));
+			if(cb_data[block][i]>255){
+				negative_cb[i]=floor((double)(cb_data[block][i])/256);
+				extra_byte_cb+= floor((double)(cb_data[block][i])/256);
 			}
-			o_cb[i+1] = static_cast<unsigned char>(round(cb_data[block][i]));
-			//cout << round(cb_data[block][i]) << "\t";
+			o_cb[i] = static_cast<unsigned char>(cb_data[block][i]);
 		}
 		int extra_byte_cr = 0;
 		for (int i = 0; i < cr_data[block].size(); i+=1){
-			if((cr_data[block][i])<0){
-				negative_cr[i+1]= floor((double)((cr_data[block][i])/256));
-				extra_byte_cr+= floor((double)((cr_data[block][i])/256));
+			if(cr_data[block][i]<0){
+				negative_cr[i]= floor((double)(cr_data[block][i])/256);
+				extra_byte_cr+= floor((double)(cr_data[block][i])/256);
 			}
-			if((cr_data[block][i])>255){
-				negative_cr[i+1]= floor((double)((cr_data[block][i])/256));
-				extra_byte_cr+= floor((double)((cr_data[block][i])/256));
+			if(cr_data[block][i]>255){
+				negative_cr[i]= floor((double)(cr_data[block][i])/256);
+				extra_byte_cr+= floor((double)(cr_data[block][i])/256);
 			}
-			o_cr[i+1] = static_cast<unsigned char>(round(cr_data[block][i]));
-			//cout << round(cr_data[block][i]) << "\t";
+			o_cr[i] = static_cast<unsigned char>(cr_data[block][i]);
 		}
 
-		o_y[0] = round(dc_coef[block][0]);
-		o_cb[0] = round(dc_coef[block][1]);
-		o_cr[0] = round(dc_coef[block][2]);
-
-		unsigned char* h_y = (unsigned char*)malloc(sizeof(unsigned char)*(100));
-		unsigned char* h_cb = (unsigned char*)malloc(sizeof(unsigned char)*(100));
-		unsigned char* h_cr = (unsigned char*)malloc(sizeof(unsigned char)*(100));
+		unsigned char* h_y =  (unsigned char*)malloc(sizeof(unsigned char)* (y_data[block].size()+390));
+		unsigned char* h_cb = (unsigned char*)malloc(sizeof(unsigned char)*(cb_data[block].size()+390));
+		unsigned char* h_cr = (unsigned char*)malloc(sizeof(unsigned char)*(cr_data[block].size()+390));
  
 		negative_block.push_back(negative_y);
 		negative_block.push_back(negative_cb);
 		negative_block.push_back(negative_cr);
 
-		ybyte = Huffman_Compress(o_y,h_y,y_data[block].size()+1);
-		cbbyte = Huffman_Compress(o_cb,h_cb,cb_data[block].size()+1);
-		crbyte = Huffman_Compress(o_cr,h_cr,cr_data[block].size()+1);
+		ybyte = Huffman_Compress(o_y,h_y,y_data[block].size());
+		cbbyte = Huffman_Compress(o_cb,h_cb,cb_data[block].size());
+		crbyte = Huffman_Compress(o_cr,h_cr,cr_data[block].size());
 
 		bytes_before.push_back(y_data[block].size());
 		huffman.push_back(h_y);

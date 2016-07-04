@@ -41,7 +41,7 @@ public:
 			return list;
 		}
 		string file = this->getExtras()[0];
-		//file = "../../"+file;
+		file = "../../"+file;
 		fp.open(file.c_str());
 		//cout << "Simulating Loss...\n";
 		vector<string> array;

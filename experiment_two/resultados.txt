@@ -2,4 +2,25 @@ Image Name                         % Pkg-Lost     % Block-Lost   Metric
   src/1.bmp                          0              62.5           PSNR: 18.375270
   src/1.bmp                          6.25           68.75          PSNR: 18.552946
   src/1.bmp                          16.6667        6.25           PSNR: 27.220559
+  src/6.bmp                          9.40734        10.8264        PSNR: 22.052471
+  src/6.bmp                          5.96303        6.27886        PSNR: 23.614645
+  src/6.bmp                          5.96303        6.27886        PSNR: 23.614645
+  src/6.bmp                          0              0              PSNR: 41.961919
+  src/6.bmp                          0              0              PSNR: 41.961919
+  src/6.bmp                          0              0              PSNR: 41.961919
+  src/6.bmp                          0              0              PSNR: 41.961919
+  src/6.bmp                          0              0              PSNR: 36.570774
+  src/6.bmp                          0              0              PSNR: 39.302157
+  src/6.bmp                          0              0              PSNR: 41.912696
+  src/6.bmp                          0              0              PSNR: 41.482713
+  src/6.bmp                          0              0              PSNR: 40.993715
+  src/6.bmp                          0              0              PSNR: 41.482713
+  src/6.bmp                          0              0              PSNR: 44.007076
+  src/6.bmp                          0              0              PSNR: 41.880905
+  src/6.bmp                          0              0              PSNR: 44.206785
+  src/6.bmp                          0              0              PSNR: 44.220923
+  src/6.bmp                          0              0              PSNR: 33.549307
+  src/6.bmp                          0              0              PSNR: 43.682586
+  src/6.bmp                          0              0              PSNR: 51.957305
+  src/6.bmp                          0              0              PSNR: 43.907167
   
