@@ -23,4 +23,5 @@ Image Name                         % Pkg-Lost     % Block-Lost   Metric
   src/6.bmp                          0              0              PSNR: 43.682586
   src/6.bmp                          0              0              PSNR: 51.957305
   src/6.bmp                          0              0              PSNR: 43.907167
+  src/6.bmp                          7.20981        8.44875        PSNR: 22.679994
   

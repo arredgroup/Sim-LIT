@@ -55,7 +55,7 @@ private:
 		*  @param list Lista de Paquetes del cual se eliminará uno por el ID
 		*  @return list
 		*/
-		for (int i = 0; i < list.size(); i++)
+		for (int i = 0; (unsigned)i < list.size(); i++)
 		{
 			if(list[i].getID()==ID){
 				list.erase(list.begin()+i);

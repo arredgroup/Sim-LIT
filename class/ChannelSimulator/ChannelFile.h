@@ -41,7 +41,7 @@ public:
 			return list;
 		}
 		string file = this->getExtras()[0];
-		file = "../../"+file;
+		//file = "../../"+file;
 		fp.open(file.c_str());
 		//cout << "Simulating Loss...\n";
 		vector<string> array;
@@ -50,7 +50,7 @@ public:
 			while(getline(fp, line)){
 				array.push_back(line);
 			}
-			for (int i = 0; i < array.size(); i++)
+			for (int i = 0; (unsigned)i < array.size(); i++)
 			{
 				string s = array.at(i);
 				size_t pos=0;
@@ -84,7 +84,7 @@ private:
 		*  @param list Lista de Paquetes del cual se eliminará uno por el ID
 		*  @return list
 		*/
-		for (int i = 0; i < list.size(); i++)
+		for (int i = 0; (unsigned)i < list.size(); i++)
 		{
 			if(list[i].getID()==ID){
 				list.erase(list.begin()+i-1);

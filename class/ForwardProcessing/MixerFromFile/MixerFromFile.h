@@ -69,11 +69,11 @@ public:
 		        list->at(iPos)=aux;
 		        save << iPos << "-" << fPos << "\n";
 		    }*/
-		    for (int i = 0; i < list->size() && !read.eof(); i++)
+		    for (int i = 0; (unsigned)i < list->size() && !read.eof(); i++)
 		    {
 		    	getline(read, line);
 			    vector<string> v = explode(line,'-');
-			    for (int j = 0; i < v.size(); ++j)
+			    for (int j = 0; (unsigned)i < v.size(); ++j)
 			    	remove(v[j].begin(), v[j].end(), ' ');
 			    vector<string> posInit = explode(v[0],',');
 			    int piX=atoi(posInit[0].c_str());

@@ -50,7 +50,7 @@ public:
             cout << "(DSJAL): Step Parameter is minor than 0! STOP!\n";
             return 1;
         }
-        unsigned int i, j, k, _h_, _w_;
+        int i, j, k, _h_, _w_;
         DataType * aux; 
         _h_=0;
         _w_=0;
@@ -58,9 +58,9 @@ public:
         int height = (header->h)/(header->hb);
         int indexH[(height*width)];
         int indexW[(height*width)];
-        for (int i = 0, k=0; i < height; i=i+1)
+        for (i = 0, k=0; i < height; i=i+1)
         {
-            for (int j = 0; j < width; j=j+1, k=k+1)
+            for (j = 0; j < width; j=j+1, k=k+1)
             {
                 indexH[k]=i;
                 indexH[k]=j;

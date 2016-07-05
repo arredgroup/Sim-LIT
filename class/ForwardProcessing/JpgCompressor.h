@@ -173,7 +173,7 @@ public:
 	}
 
 	bool isEmpty(int pos, vector <double> v){
-		for (int i = pos; i < v.size(); i+=1){
+		for (int i = pos; (unsigned)i < v.size(); i+=1){
 			if(v[i]!=0)
 				return false;
 		}
@@ -222,7 +222,7 @@ private:
 	void resetHuffman(int fb, int cb){
  		int block = (fb*jpg_width)+cb;
  		int size = compressed_blocks[block].size();
-		for(int i = 0;i < size && i < bytes_huffman[block].size() && i < bytes_before_huffman[block].size();i+=1){
+		for(int i = 0;i < size && (unsigned)i < bytes_huffman[block].size() && (unsigned)i < bytes_before_huffman[block].size();i+=1){
 			if(bytes_huffman[block][i]>0){
 				int bytes_b = bytes_before_huffman[block][i];
 				int bytes_h = bytes_huffman[block][i];
@@ -392,7 +392,7 @@ private:
 
 	void calculateAllIDCT(){
 		image.resize(jpg_height*8);
-		for (int i = 0; i < image.size(); i+=1){
+		for (int i = 0; (unsigned)i < image.size(); i+=1){
 			image[i].resize(jpg_width*8);
 		}
 		for (int f = 0; f < jpg_height; f+=1){
@@ -428,8 +428,8 @@ private:
 	}
 
 	void invertColorSpace(){
-		for(int i=0;i<image.size();i+=1){
-			for(int j=0;j<image[i].size();j+=1){
+		for(int i=0;(unsigned)i<image.size();i+=1){
+			for(int j=0;(unsigned)j<image[i].size();j+=1){
 				image[i][j] = YCC_to_RGB(image[i][j]);
 			}
 		}
@@ -438,7 +438,7 @@ private:
 	void clearExtraPixels(){
 		if(extra_w>0 || extra_h>0){
 			image.resize((jpg_height*8)-extra_h);
-			for (int i = 0; i < image.size(); i+=1){
+			for (int i = 0; (unsigned)i < image.size(); i+=1){
 				image[i].resize((jpg_width*8)-extra_w);
 			}
 		}
@@ -446,10 +446,10 @@ private:
 
 	void generateImage(){
 		new_list.clear();
-		for (int i = 0; i < image.size(); i+=1){
-			for (int j = 0; j < image[i].size(); j+=1){
+		for (int i = 0; (unsigned)i < image.size(); i+=1){
+			for (int j = 0; (unsigned)j < image[i].size(); j+=1){
 				vector<int> channels;
-				for(int c = 0; c < image[i][j].size(); c+=1)
+				for(int c = 0; (unsigned)c < image[i][j].size(); c+=1)
 					channels.push_back((int)image[i][j][c]);
 				DataBlock* block = new DataBlock(image[i][j].size(),channels,1,1);
 				new_list.push_back(block);
@@ -465,7 +465,7 @@ private:
 
 	void readImage(vector<DataType *> *list, HEAD* header){
 		image.resize(image_height);
-		for (int i = 0; i < image.size(); i+=1){
+		for (int i = 0; (unsigned)i < image.size(); i+=1){
 			image[i].resize(image_width);
 		}
 		int w_block = 0;
@@ -485,7 +485,7 @@ private:
 					for(int c = 0;c < w_block; c+=1){
 						Pixel px = block->at((f*h_block)+c);
 						vector<int> aux = px.getChannels();
-						for (int x = 0; x < chnl_block && x < aux.size(); x+=1){
+						for (int x = 0; x < chnl_block && (unsigned)x < aux.size(); x+=1){
 							image[(i*h_block)+f][(j*w_block)+c].push_back(aux[x]);
 						}
 					}
@@ -496,12 +496,12 @@ private:
 
 	void generateExtraPixels(){
 		if(extra_w>0){
-			for (int i = 0; i < image.size(); i+=1){
+			for (int i = 0; (unsigned)i < image.size(); i+=1){
 				int j=image[i].size();
 				image[i].resize(j+extra_w);
 				for(int pos = 0; pos<extra_w; pos+=1){
 					vector <double> rgb;
-					for(int x =0; x < image[i][j-1].size();x+=1){
+					for(int x =0; (unsigned)x < image[i][j-1].size();x+=1){
 						rgb.push_back(image[i][j-1][x]);
 					}
 					image[i][j+pos]=rgb;
@@ -513,9 +513,9 @@ private:
 			image.resize(i+extra_h);
 			for(int pos=0; pos < extra_h; pos+=1){
 				vector< vector <double>> aux;
-				for (int j = 0; j < image[i-1].size(); j+=1){
+				for (int j = 0; (unsigned)j < image[i-1].size(); j+=1){
 					vector <double> rgb;
-					for(int x =0; x < image[i-1][j].size();x+=1){
+					for(int x =0; (unsigned)x < image[i-1][j].size();x+=1){
 						rgb.push_back(image[i-1][j][x]);
 					}
 					aux.push_back(rgb);
@@ -560,8 +560,8 @@ private:
 	}
 
 	void convertColorSpace(){
-		for(int i=0;i<image.size();i+=1){
-			for(int j=0;j<image[i].size();j+=1){
+		for(int i=0;(unsigned)i<image.size();i+=1){
+			for(int j=0;(unsigned)j<image[i].size();j+=1){
 				if(image[i][j].size()==3){
 					image[i][j] = RGB_to_YCC(image[i][j]);
 				}
@@ -669,7 +669,7 @@ private:
 	}
 
 	vector<double> clearZero(vector<double> v){
-		for (int i = 0; i < v.size(); i+=1){
+		for (int i = 0; (unsigned)i < v.size(); i+=1){
 			if(isEmpty(i,v))
 				v.resize(i);
 		}
@@ -731,7 +731,7 @@ private:
 		unsigned char* o_cb = (unsigned char*)malloc(sizeof(unsigned char)*(cb_data[block].size()));
 		unsigned char* o_cr = (unsigned char*)malloc(sizeof(unsigned char)*(cr_data[block].size()));
 		int extra_byte_y = 0;
-		for (int i = 0; i < y_data[block].size(); i+=1){
+		for (int i = 0; (unsigned)i < y_data[block].size(); i+=1){
 			if(y_data[block][i]<0){
 				negative_y[i]= floor((double)(y_data[block][i])/256);
 				extra_byte_y += floor((double)(y_data[block][i])/256);
@@ -743,7 +743,7 @@ private:
 			o_y[i] = static_cast<unsigned char>(y_data[block][i]);
 		}
 		int extra_byte_cb = 0;
-		for (int i = 0; i < cb_data[block].size(); i+=1){
+		for (int i = 0; (unsigned)i < cb_data[block].size(); i+=1){
 			if(cb_data[block][i]<0){
 				negative_cb[i]= floor((double)(cb_data[block][i])/256);
 				extra_byte_cb += floor((double)(cb_data[block][i])/256);
@@ -755,7 +755,7 @@ private:
 			o_cb[i] = static_cast<unsigned char>(cb_data[block][i]);
 		}
 		int extra_byte_cr = 0;
-		for (int i = 0; i < cr_data[block].size(); i+=1){
+		for (int i = 0; (unsigned)i < cr_data[block].size(); i+=1){
 			if(cr_data[block][i]<0){
 				negative_cr[i]= floor((double)(cr_data[block][i])/256);
 				extra_byte_cr+= floor((double)(cr_data[block][i])/256);
@@ -808,8 +808,8 @@ private:
 	void generateDatabytestream(){
 		int hbyte = 0;
 		int obyte = 0;
-		for (int f = 0; f < compressed_blocks.size(); f+=1){
-			for (int c = 0; c < compressed_blocks[f].size(); c+=1){
+		for (int f = 0; (unsigned)f < compressed_blocks.size(); f+=1){
+			for (int c = 0; (unsigned)c < compressed_blocks[f].size(); c+=1){
 				hbyte = bytes_huffman[f][c];
 				obyte = bytes_before_huffman[f][c];
 				DataByteStream* db = new DataByteStream(compressed_blocks[f][c],obyte,hbyte);

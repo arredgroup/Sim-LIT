@@ -88,7 +88,7 @@ public:
 	 * @return size
 	 */	
 		 double size=0;
-		 for(int i=0;i<elements.size();i++){
+		 for(int i=0;(unsigned)i<elements.size();i++){
 		 	size+=elements[i]->getSize();
 		 }
 	return size;	

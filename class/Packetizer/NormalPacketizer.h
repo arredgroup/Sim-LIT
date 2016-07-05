@@ -71,18 +71,18 @@ public:
 		vector<DataType *> elements;
 		vector<int> idElements;
 		int pos=0;
-		for(int i=0;i<list.size();i+=1){
+		for(int i=0;(unsigned)i<list.size();i+=1){
 			Package aux = list[i];
 			elements = aux.getElements();
 			idElements = aux.getIdElements();
-			for (int j = 0; j < elements.size(); j++)
+			for (int j = 0; (unsigned)j < elements.size(); j++)
 			{
 				pos = idElements[j];
 				data[pos]=elements[j];
 			}
 		}
 		int good=0;
-		for(int i=0;i<data.size();i+=1){
+		for(int i=0;(unsigned)i<data.size();i+=1){
 			if(data[i]!=NULL)
 				good+=1;
 		}

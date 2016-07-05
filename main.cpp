@@ -75,7 +75,7 @@ using namespace std;
 			cout << "Arguments readed\n";
 		Images img(src,&header,show_data);
 		vector<DataType *> list = img.toList();
-		for (int i = 0; i < fp.size(); i=i+1)
+		for (int i = 0; (unsigned)i < fp.size(); i=i+1)
 		{
 			int narg = fp_narguments[i];
 			vector<void *> args = fp_arguments[i];
@@ -125,7 +125,7 @@ using namespace std;
 
 		rbd->hidden(&received,show_data,export_images,&header);
 
-		for (int i = 0; i < metrics.size(); i=i+1)
+		for (int i = 0; (unsigned)i < metrics.size(); i=i+1)
 		{
 			double met = metrics.at(i)->calculate(img,received,show_data,&header);
 			if(export_files){

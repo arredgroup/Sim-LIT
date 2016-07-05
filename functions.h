@@ -83,7 +83,7 @@ bool readArguments(int n, char const *args[]){
 					}
 					string fpname = args[i];
 					ForwardProcessing* fpr = ForwardProcessingCreator::create(fpname);
-					if(fpr!=NULL && nArguments==argv.size()){
+					if(fpr!=NULL && (unsigned)nArguments==argv.size()){
 						fp_name.push_back(fpname);
 						fp.push_back(fpr);
 						fp_arguments.push_back(argv);
@@ -154,7 +154,7 @@ bool readArguments(int n, char const *args[]){
 						c=c+1;
 					}
 					i=i+c;
-					if(argu.size()==x){
+					if(argu.size()==(unsigned)x){
 						Channel* chn = ChannelCreator::create(fpname, argu);
 						if(chn!=NULL){
 							chnl=chn;

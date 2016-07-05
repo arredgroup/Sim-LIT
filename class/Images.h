@@ -219,7 +219,7 @@ public:
 						for(int c=0;c<wblock;c++){
 							vector<int> v_rgb = (e->at((r*hblock)+c)).getChannels();
 							int* rgb = (int*)malloc(sizeof(int)*v_rgb.size());
-							for(int x=0;x<v_rgb.size();x++){
+							for(int x=0;(unsigned)x<v_rgb.size();x++){
 								rgb[x]=v_rgb[x];
 							}
 							img.draw_point((j*wblock)+c,(i*hblock)+r,0,rgb);
@@ -266,7 +266,7 @@ public:
 						for(int c=0;c<wblock;c++){
 							vector<int> v_rgb = (e->at((r*hblock)+c)).getChannels();
 							vector<int> rgb;
-							for(int x=0;x<v_rgb.size();x++){
+							for(int x=0;(unsigned)x<v_rgb.size();x++){
 								rgb.push_back(v_rgb[x]);
 							}
 							DataBlock * px = new DataBlock(type, rgb,1,1);
