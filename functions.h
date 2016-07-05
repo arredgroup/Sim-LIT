@@ -209,7 +209,8 @@ bool readArguments(int n, char const *args[]){
 		if(!argument.compare(FOLDER_RESULT)){
 			if((i+1)<n && args[i+1][0]!='-'){
 				header.folder = args[i+1];
-				system(("mkdir -p "+header.folder).c_str());
+				if(system(("mkdir -p "+header.folder).c_str()))
+					;
 				i=i+2;
 			}
 			else{
