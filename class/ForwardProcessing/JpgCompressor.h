@@ -160,7 +160,7 @@ public:
 			return a;
 		return b;
 	}
-
+/*
 	void setTypeSubsampling(char* type){
 		if(!strcasecmp(type,"Y_ONLY"))
 			type_subsampling = Y_ONLY;
@@ -171,7 +171,7 @@ public:
 		if(!strcasecmp(type,"H2V2"))
 			type_subsampling = H2V2;
 	}
-
+*/
 	bool isEmpty(int pos, vector <double> v){
 		for (int i = pos; (unsigned)i < v.size(); i+=1){
 			if(v[i]!=0)
@@ -191,6 +191,7 @@ private:
 
 	void generateLocalUnsignedChar(vector<DataType *> *list){
 		int size = list->size();
+
 		for(int i = 0;i < size;i+=3){
 			vector < unsigned char*> compressed_block;
 			vector <int> bytes_huffman_block;
