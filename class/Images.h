@@ -280,6 +280,8 @@ public:
 		matrix = newMatrix;
 		hblock = 1;
 		wblock = 1;
+		header->h = h;
+		header->w = w;
 		header->hb=hblock;
 		header->wb=wblock;
 	}

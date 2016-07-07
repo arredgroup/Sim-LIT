@@ -16,13 +16,13 @@
 
 class DataByteStream: public DataType{
 
-	 unsigned char* element; //!<@brief Elemento que Compone al Byte
-	 int huffman_bytes;
-	 int original_bytes;
+	 vector<unsigned char*> element; //!<@brief Elemento que Compone al Byte
+	 vector<int> huffman_bytes;
+	 vector<int> original_bytes;
 
 public:
 
-	DataByteStream(unsigned char* nElement, int oBytes, int nBytes){
+	DataByteStream(vector<unsigned char*> nElement, vector<int> oBytes, vector<int> nBytes){
 	/**
 	 * @brief Constructor de la Clase DataBlock
 	 * @param nBlock Píxeles que contiene un DataBlock
@@ -42,9 +42,6 @@ public:
 	/**
 	 * @brief Constructor de la Clase DataBlock
 	*/	
-		element = NULL;
-		huffman_bytes = 0;
-		original_bytes = 0;
 		this->setValid(false);
 	}
 
@@ -56,7 +53,10 @@ public:
 	*  @brief Método que devuelve el tamaño del Elemento
 	*  @return result
 	*/
-		double size = (double)huffman_bytes+0.0;
+		double size = 0.0;
+		for (int i = 0; (unsigned)i < huffman_bytes.size(); i+=1){
+			size += (double)huffman_bytes[i];
+		}
 		return size;
 	}
 
@@ -79,14 +79,18 @@ public:
 	/**
 	 * @brief Método que Obtiene el Dato del Byte
 	 */
-		return (void*)element;
+		return (void*)&element;
 	}
 
-	int getOriginalBytes(){
+	vector<unsigned char*> getHuffman(){
+		return element;
+	}
+
+	vector<int> getOriginalBytes(){
 		return original_bytes;
 	}
 
-	int getHuffmanBytes(){
+	vector<int> getHuffmanBytes(){
 		return huffman_bytes;
 	}
 

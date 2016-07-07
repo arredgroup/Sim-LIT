@@ -124,7 +124,6 @@ using namespace std;
 		Images received(pkgs_rcved,&header,show_data);
 
 		rbd->hidden(&received,show_data,export_images,&header);
-
 		for (int i = 0; (unsigned)i < metrics.size(); i=i+1)
 		{
 			double met = metrics.at(i)->calculate(img,received,show_data,&header);

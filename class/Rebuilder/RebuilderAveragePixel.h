@@ -44,7 +44,7 @@ public:
 		do{
 			for(int i = 0; i < h; i++){
 	            for(int j = 0; j < w; j++){
-	                if((!matrix[i][j].isValid()) && amountNeighbors(img,i,j)>=neighbors) // si el bloque no es válido
+	                if((!matrix[i][j].isValid()) && amountNeighbors(img,i,j)==neighbors) // si el bloque no es válido
 	                {
 	                    vector<int> add(amount_channels);
 		                for(int x=0;x<amount_channels;x++)
@@ -80,8 +80,8 @@ public:
 	                }
 	            }
 	        }
-	        neighbors-=1;
-	    }while(neighbors>=0 && isLossBlock(img));
+	        neighbors=maxNeighbors(img,h,w);
+	    }while(neighbors!=0 && isLossBlock(img));
 	    if(export_images){
 	    	string path = header->folder+"/image_received_restored.bmp";
             img->save(path.c_str());
@@ -91,6 +91,18 @@ public:
 	}
 
 private:
+
+	int maxNeighbors(Images* img, int h, int w){
+		int max = 0;
+		DataBlock** matrix = img->getMatrix();
+		for (int i = 0; i < h; i+=1){
+			for(int j = 0; j < w; j+=1){
+				if(max<amountNeighbors(img,i,j) && !matrix[i][j].isValid())
+					max = amountNeighbors(img,i,j);
+			}
+		}
+		return max;
+	}
 
 	int amountNeighbors(Images* img, int i, int j){
 	/** 

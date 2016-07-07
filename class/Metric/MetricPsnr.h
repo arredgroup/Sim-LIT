@@ -38,8 +38,8 @@ public:
 			org.clearBlocks(header);
 		}
 	    mse = 0;
-	    int h = org.getHeight()/org.getHeightBlock();
-	    int w = org.getWidth()/org.getWidthBlock();
+	    int h = org.getHeight();
+	    int w = org.getWidth();
 	    DataBlock** org_m = org.getMatrix();
 	    DataBlock** rcv_m = rcv.getMatrix();
 	    for (int i = 0; i < h; i=i+1)

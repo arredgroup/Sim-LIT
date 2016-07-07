@@ -1,6 +1,6 @@
 /**
-  @file Jpg.h
-  @class Jpg
+  @file JpgCompressor.h
+  @class JpgCompressor
   @brief Clase que implementa un tipo de compresión de JPG 
   @author Christopher Arredondo Flores
   @date 01/01/2016
@@ -61,6 +61,8 @@ private:
 
 	vector<DataType *> new_list;
 
+	vector<int> losses;
+
 public:
 
 	JpgCompressor(){}
@@ -77,14 +79,7 @@ public:
             cout << "(JPEG): Compression Quality must be between 1 and 100\n";
             return 1;
         }
-/*
-		char* type_ss = (char*)parameters[1];
-		if(strcasecmp(type_ss, "Y_ONLY")!=0 && strcasecmp(type_ss, "H1V1")!=0 && strcasecmp(type_ss, "H2V1")!=0 && strcasecmp(type_ss, "H2V2")!=0){
-			cout << "(JPEG): Compression Subsampling Is Wrong!\n";
-            return 1;
-		}
-		setTypeSubsampling(type_ss);
-*/
+
 		image_width = (header->w*header->wb);
 		image_height = (header->h*header->hb);
 
@@ -125,6 +120,7 @@ public:
 			redoQuantizateAllDCT();//Invierte la Cuantización
 			calculateAllIDCT();//Calcula la IDCT
 			invertColorSpace();
+			setInvalid();
 			clearExtraPixels();
 			generateImage();
 			*list = new_list;
@@ -160,18 +156,7 @@ public:
 			return a;
 		return b;
 	}
-/*
-	void setTypeSubsampling(char* type){
-		if(!strcasecmp(type,"Y_ONLY"))
-			type_subsampling = Y_ONLY;
-		if(!strcasecmp(type,"H1V1"))
-			type_subsampling = H1V1;
-		if(!strcasecmp(type,"H2V1"))
-			type_subsampling = H2V1;
-		if(!strcasecmp(type,"H2V2"))
-			type_subsampling = H2V2;
-	}
-*/
+
 	bool isEmpty(int pos, vector <double> v){
 		for (int i = pos; (unsigned)i < v.size(); i+=1){
 			if(v[i]!=0)
@@ -191,22 +176,19 @@ private:
 
 	void generateLocalUnsignedChar(vector<DataType *> *list){
 		int size = list->size();
-
-		for(int i = 0;i < size;i+=3){
+		for(int i = 0;i < size;i+=1){
 			vector < unsigned char*> compressed_block;
 			vector <int> bytes_huffman_block;
 			vector <int> bytes_original_block;
-			for(int c = 0; c < 3; c+=1){
-				DataByteStream * compressed = (DataByteStream *)list->at(i+c);
-				if(compressed!=NULL && compressed->isValid()){
-					unsigned char* huffman_stream = (unsigned char*)compressed->getExtras();
-					int size_b_h = compressed->getHuffmanBytes();
-					bytes_huffman_block.push_back(size_b_h);
-					int size_b_o = compressed->getOriginalBytes();
-					bytes_original_block.push_back(size_b_o);
-					compressed_block.push_back(huffman_stream);
-				}
-				else{
+			DataByteStream * compressed = (DataByteStream *)list->at(i);
+			if(compressed!=NULL && compressed->isValid()){
+				compressed_block = compressed->getHuffman();
+				bytes_huffman_block = compressed->getHuffmanBytes();
+				bytes_original_block = compressed->getOriginalBytes();
+			}
+			else{
+				losses.push_back(i);
+				for(int c = 0;c<3;c+=1){
 					unsigned char* huffman_stream = (unsigned char*)malloc(sizeof(unsigned char));
 					huffman_stream[0] = (unsigned char)0;
 					bytes_huffman_block.push_back(0);
@@ -217,6 +199,7 @@ private:
 			bytes_huffman.push_back(bytes_huffman_block);
 			bytes_before_huffman.push_back(bytes_original_block);
 			compressed_blocks.push_back(compressed_block);
+
 		}
 	}
 
@@ -436,6 +419,20 @@ private:
 		}
 	}
 
+	void setInvalid(){
+		for(int c = 0; (unsigned)c < losses.size(); c+=1){
+			int pos = losses[c];
+			int row = floor(pos/jpg_width);
+			int col = pos%jpg_width;
+			for (int i = 0; i < 8; i+=1){
+				for (int j = 0; j < 8; j+=1){
+					for(int x = 0; (unsigned)x < image[(row*8)+i][(col*8)+j].size(); x+=1)
+						image[(row*8)+i][(col*8)+j][x]=-1;
+				}
+			}
+		}
+	}
+
 	void clearExtraPixels(){
 		if(extra_w>0 || extra_h>0){
 			image.resize((jpg_height*8)-extra_h);
@@ -450,9 +447,17 @@ private:
 		for (int i = 0; (unsigned)i < image.size(); i+=1){
 			for (int j = 0; (unsigned)j < image[i].size(); j+=1){
 				vector<int> channels;
-				for(int c = 0; (unsigned)c < image[i][j].size(); c+=1)
+				int flag = 0;
+				for(int c = 0; (unsigned)c < image[i][j].size(); c+=1){
+					if((int)image[i][j][c]==-1)
+						flag = 1;
 					channels.push_back((int)image[i][j][c]);
-				DataBlock* block = new DataBlock(image[i][j].size(),channels,1,1);
+				}
+				DataBlock* block=NULL;
+				if(flag!=1)
+					 block = new DataBlock(image[i][j].size(),channels,1,1);
+				else
+					block = new DataBlock();
 				new_list.push_back(block);
 			}
 		}
@@ -807,15 +812,9 @@ private:
 	}
 
 	void generateDatabytestream(){
-		int hbyte = 0;
-		int obyte = 0;
 		for (int f = 0; (unsigned)f < compressed_blocks.size(); f+=1){
-			for (int c = 0; (unsigned)c < compressed_blocks[f].size(); c+=1){
-				hbyte = bytes_huffman[f][c];
-				obyte = bytes_before_huffman[f][c];
-				DataByteStream* db = new DataByteStream(compressed_blocks[f][c],obyte,hbyte);
-				new_list.push_back(db);
-			}
+			DataByteStream* db = new DataByteStream(compressed_blocks[f],bytes_before_huffman[f],bytes_huffman[f]);
+			new_list.push_back(db);
 		}
 		bytes_huffman.clear();
 		bytes_before_huffman.clear();
