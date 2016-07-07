@@ -45,9 +45,9 @@ private:
 	int s_std_lum_quant[64] = { 16,11,12,14,12,10,16,14,13,14,18,17,16,19,24,40,26,24,22,22,24,49,35,37,29,40,58,51,61,60,57,51,56,55,64,72,92,78,64,68,87,69,55,56,80,109,81,87,95,98,103,104,103,62,77,113,121,112,100,120,92,101,103,99 };
 	int quantization_table[64];
 
-	enum subsampling { Y_ONLY = 0, H1V1 = 1, H2V1 = 2, H2V2 = 3 };
+	//enum subsampling { Y_ONLY = 0, H1V1 = 1, H2V1 = 2, H2V2 = 3 };
 
-	int type_subsampling;
+	//int type_subsampling;
 	int quality;
 
 	int extra_w;
@@ -68,7 +68,7 @@ public:
 	~JpgCompressor(){}
 
 	int make(vector<DataType *> *list, HEAD *header, vector<void*> parameters, int nParameters, bool show_data, bool export_image){
-		if(nParameters!=2){
+		if(nParameters!=1){
             cout << "(JPEG): Parameters number are incorrect! STOP!\n";
             return 1;
 		}
@@ -77,14 +77,14 @@ public:
             cout << "(JPEG): Compression Quality must be between 1 and 100\n";
             return 1;
         }
-
+/*
 		char* type_ss = (char*)parameters[1];
 		if(strcasecmp(type_ss, "Y_ONLY")!=0 && strcasecmp(type_ss, "H1V1")!=0 && strcasecmp(type_ss, "H2V1")!=0 && strcasecmp(type_ss, "H2V2")!=0){
 			cout << "(JPEG): Compression Subsampling Is Wrong!\n";
             return 1;
 		}
 		setTypeSubsampling(type_ss);
-
+*/
 		image_width = (header->w*header->wb);
 		image_height = (header->h*header->hb);
 
