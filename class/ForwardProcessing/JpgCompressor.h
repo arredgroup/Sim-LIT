@@ -176,6 +176,9 @@ private:
 
 	void generateLocalUnsignedChar(vector<DataType *> *list){
 		int size = list->size();
+		bytes_huffman.resize(size);
+		bytes_before_huffman.resize(size);
+		compressed_blocks.resize(size);
 		for(int i = 0;i < size;i+=1){
 			vector < unsigned char*> compressed_block;
 			vector <int> bytes_huffman_block;
@@ -196,9 +199,9 @@ private:
 					compressed_block.push_back(huffman_stream);
 				}
 			}
-			bytes_huffman.push_back(bytes_huffman_block);
-			bytes_before_huffman.push_back(bytes_original_block);
-			compressed_blocks.push_back(compressed_block);
+			bytes_huffman[i] = bytes_huffman_block;
+			bytes_before_huffman[i] = bytes_original_block;
+			compressed_blocks[i] = compressed_block;
 
 		}
 	}
@@ -444,6 +447,7 @@ private:
 
 	void generateImage(){
 		new_list.clear();
+		new_list.resize(image_width*image_height);
 		for (int i = 0; (unsigned)i < image.size(); i+=1){
 			for (int j = 0; (unsigned)j < image[i].size(); j+=1){
 				vector<int> channels;
@@ -458,7 +462,7 @@ private:
 					 block = new DataBlock(image[i][j].size(),channels,1,1);
 				else
 					block = new DataBlock();
-				new_list.push_back(block);
+				new_list[(i*image_width)+j]=block;
 			}
 		}
 	}
@@ -558,10 +562,10 @@ private:
 	    double Y  = element;
 		double Cb = 0;
 		double Cr = 0;
-		vector<double> YCC;
-		YCC.push_back(Y);
-		YCC.push_back(Cb);
-		YCC.push_back(Cr);
+		vector<double> YCC(3,0);
+		YCC[0]=Y;
+		YCC[1]=Cb;
+		YCC[2]=Cr;
 		return YCC;
 	}
 
@@ -581,21 +585,21 @@ private:
 
 	void calculateDCT(int fb, int cb){
 		int pos = (fb*jpg_width)+cb;
-		vector< vector<double>> dr;
-		vector< vector<double>> dg;
-		vector< vector<double>> db;
+		vector< vector<double>> dr(8);
+		vector< vector<double>> dg(8);
+		vector< vector<double>> db(8);
+
 		dct_r.resize(jpg_width*jpg_height);
 		dct_g.resize(jpg_width*jpg_height);
 		dct_b.resize(jpg_width*jpg_height);
-		dr.resize(8);
-		dg.resize(8);
-		db.resize(8);
-		double Cu, Cv;
+
 		for (int i = 0; i < 8; i+=1){
 			dr[i].resize(8,0);
 			dg[i].resize(8,0);
 			db[i].resize(8,0);
 		}
+
+		double Cu, Cv;
 		for (int u = 0; u < 8; u+=1){
 			for (int v = 0; v < 8; v+=1){
 				if (u == 0) {
@@ -700,14 +704,17 @@ private:
 			without_zero_b[i] = dct_b[block][row][col];
 		}
 		without_zero_r = clearZero(without_zero_r);
-		y_data.push_back(without_zero_r);
+		y_data[block]  = without_zero_r;
 		without_zero_g = clearZero(without_zero_g);
-		cb_data.push_back(without_zero_g);
+		cb_data[block] = without_zero_g;
 		without_zero_b = clearZero(without_zero_b);
-		cr_data.push_back(without_zero_b);
+		cr_data[block] = without_zero_b;
 	}
 
 	void reduceZerosToAll(){
+		y_data.resize(jpg_width*jpg_height);
+		cb_data.resize(jpg_width*jpg_height);
+		cr_data.resize(jpg_width*jpg_height);
 		for (int f = 0; f < jpg_height; f+=1){
 			for (int c = 0; c < jpg_width; c+=1){
 				reduceZeros(f,c);
@@ -717,18 +724,13 @@ private:
 
 	void applyHuffman(int fb, int cb){
 		int block = (fb*jpg_width)+cb;
-		vector<unsigned char*> huffman;
-		vector<int> bytes_before;
-		vector<int> bytes;
-		vector< vector<int> > negative_block;
-
-		vector<int> negative_y;
-		vector<int> negative_cb;
-		vector<int> negative_cr;
-
-		negative_y.resize(64,0);
-		negative_cb.resize(64,0);
-		negative_cr.resize(64,0);
+		vector<unsigned char*> huffman(3);
+		vector<int> bytes_before(3);
+		vector<int> bytes(3);
+		vector< vector<int> > negative_block(3);
+		vector<int> negative_y(64,0);
+		vector<int> negative_cb(64,0);
+		vector<int> negative_cr(64,0);
 
 		int ybyte;
 		int cbbyte;
@@ -777,33 +779,37 @@ private:
 		unsigned char* h_cb = (unsigned char*)malloc(sizeof(unsigned char)*(cb_data[block].size()+390));
 		unsigned char* h_cr = (unsigned char*)malloc(sizeof(unsigned char)*(cr_data[block].size()+390));
  
-		negative_block.push_back(negative_y);
-		negative_block.push_back(negative_cb);
-		negative_block.push_back(negative_cr);
+		negative_block[0] = negative_y;
+		negative_block[1] = negative_cb;
+		negative_block[2] = negative_cr;
 
 		ybyte = Huffman_Compress(o_y,h_y,y_data[block].size());
 		cbbyte = Huffman_Compress(o_cb,h_cb,cb_data[block].size());
 		crbyte = Huffman_Compress(o_cr,h_cr,cr_data[block].size());
 
-		bytes_before.push_back(y_data[block].size());
-		huffman.push_back(h_y);
-		bytes.push_back(ybyte);
+		bytes_before[0] = y_data[block].size();
+		huffman[0] = h_y;
+		bytes[0] = ybyte;
 
-		bytes_before.push_back(cb_data[block].size());
-		huffman.push_back(h_cb);
-		bytes.push_back(cbbyte);
+		bytes_before[1] = cb_data[block].size();
+		huffman[1] = h_cb;
+		bytes[1] = cbbyte;
 
-		bytes_before.push_back(cr_data[block].size());
-		huffman.push_back(h_cr);
-		bytes.push_back(crbyte);
+		bytes_before[2] = cr_data[block].size();
+		huffman[2] = h_cr;
+		bytes[2] = crbyte;
 
-		compressed_blocks.push_back(huffman);
-		bytes_huffman.push_back(bytes);
-		bytes_before_huffman.push_back(bytes_before);
-		negative_position.push_back(negative_block);
+		compressed_blocks[block] = huffman;
+		bytes_huffman[block] = bytes;
+		bytes_before_huffman[block] = bytes_before;
+		negative_position[block] = negative_block;
 	}
 
 	void applyHuffmanToAll(){
+		compressed_blocks.resize(jpg_width*jpg_height);
+		bytes_huffman.resize(jpg_width*jpg_height);
+		bytes_before_huffman.resize(jpg_width*jpg_height);
+		negative_position.resize(jpg_width*jpg_height);
 		for (int f = 0; f < jpg_height; f+=1){
 			for (int c = 0; c < jpg_width; c+=1){
 				applyHuffman(f,c);
@@ -812,9 +818,10 @@ private:
 	}
 
 	void generateDatabytestream(){
+		new_list.resize(compressed_blocks.size());
 		for (int f = 0; (unsigned)f < compressed_blocks.size(); f+=1){
 			DataByteStream* db = new DataByteStream(compressed_blocks[f],bytes_before_huffman[f],bytes_huffman[f]);
-			new_list.push_back(db);
+			new_list[f] = db;
 		}
 		bytes_huffman.clear();
 		bytes_before_huffman.clear();

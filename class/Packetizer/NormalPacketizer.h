@@ -42,7 +42,7 @@ public:
 			cout << "N-DATATYPE-SENDED: " << list.size() << "\n";
 		int id=0;
 		Package* aux = new Package(size,id);
-		id++;
+		id+=1;
 		amount_elements = list.size();
 		for(int i=0;i < amount_elements; i+=1){
 			DataType* element = list.at(i);

@@ -87,7 +87,7 @@ private:
 		for (int i = 0; (unsigned)i < list.size(); i++)
 		{
 			if(list[i].getID()==ID){
-				list.erase(list.begin()+i-1);
+				list.erase(list.begin()+i);
 				i--;
 			}
 		}
