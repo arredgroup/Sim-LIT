@@ -78,7 +78,7 @@ public:
 	            }
 	        }
 	        neighbors=maxNeighbors(img,h,w);
-	    }while(neighbors>0 && isLossBlock(img));
+	    }while(neighbors>=0 && isLossBlock(img));
 	    if(export_images){
 	    	string path = header->folder+"/image_received_restored.bmp";
             img->save(path.c_str());
