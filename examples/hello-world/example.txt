@@ -6,6 +6,8 @@
 
 ./simlit -image-name src/6.bmp -forward-method 1 jpg-compressor 1 79 -packetizer-method 50 normal-packetizer -rebuilder-method rebuilder-average-opt -metric 1 metric-psnr -export-result resultados.txt -folder experiment_two -show-data-screen -export-images
 
+./simlit -image-name src/6.bmp -forward-method 1 jpg-compressor 1 79 -packetizer-method 50 normal-packetizer -rebuilder-method rebuilder-average-pixel -metric 1 metric-psnr -export-result resultados.txt -folder experiment_two -show-data-screen -export-images
+
 ./simlit -image-name src/8.bmp -forward-method 1 jpg-compressor 1 79 -packetizer-method 50 normal-packetizer -rebuilder-method rebuilder-average-opt -metric 1 metric-psnr -export-result resultados.txt -folder experiment_two -show-data-screen -export-images
 
 ./simlit -image-name src/6.bmp -forward-method 1 jpg-compressor 1 90 -packetizer-method 50 normal-packetizer -rebuilder-method rebuilder-average-opt -metric 1 metric-psnr -export-result resultados.txt -folder experiment_two -show-data-screen -export-images

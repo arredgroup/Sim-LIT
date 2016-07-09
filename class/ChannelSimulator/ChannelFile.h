@@ -70,6 +70,7 @@ public:
 		else{
 			cout << "File Can't open\n";
 		}
+		//cout << "END";
 		return list; 
 	}
 

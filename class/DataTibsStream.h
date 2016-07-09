@@ -1,28 +1,26 @@
 /**
-  @file DataByte.h
-  @class DataByte
-  @brief Clase que representa un Byte de Información
+  @file DataTibsStream.h
+  @class DataTibsStream
+  @brief Clase que representa un Stream de Información JPG
   @author Christopher Arredondo Flores
   @date 28/9/2014
 
 **/
-#ifndef CLASS_DATABYTESTREAM
-#define CLASS_DATABYTESTREAM
+#ifndef CLASS_DATATIBSSTREAM
+#define CLASS_DATATIBSSTREAM
 
 #include <iostream>
 #include "DataType.h"
 
  using namespace std;
 
-class DataByteStream: public DataType{
+class DataTibsStream: public DataType{
 
-	 vector<unsigned char*> element; //!<@brief Elemento que Compone al Byte
-	 vector<int> huffman_bytes;
-	 vector<int> original_bytes;
+	 vector<vector<unsigned char>> element; //!<@brief Elemento que Compone al Byte
 
 public:
 
-	DataByteStream(vector<unsigned char*> nElement, vector<int> oBytes, vector<int> nBytes){
+	DataTibsStream(vector<vector<unsigned char>> nElement){
 	/**
 	 * @brief Constructor de la Clase DataBlock
 	 * @param nBlock Píxeles que contiene un DataBlock
@@ -31,21 +29,19 @@ public:
 	 * @param nAmount Cantidad de Canales que tendrá el bloque
 	 * 
 	 */
-	 	 huffman_bytes = nBytes;
-	 	 original_bytes = oBytes;
          element = nElement;
          this->setValid(true);
 	}
 
 
-	DataByteStream(){
+	DataTibsStream(){
 	/**
 	 * @brief Constructor de la Clase DataBlock
 	*/	
 		this->setValid(false);
 	}
 
-	~DataByteStream(){
+	~DataTibsStream(){
 	}
 
 	double getSize(){
@@ -53,9 +49,9 @@ public:
 	*  @brief Método que devuelve el tamaño del Elemento
 	*  @return result
 	*/
-		double size = 0.0;
-		for (int i = 0; (unsigned)i < huffman_bytes.size(); i+=1){
-			size += (double)huffman_bytes[i];
+		double size = 0;
+		for (int i = 0; (unsigned)i < element.size(); i+=1){
+			size += (double)element[i].size();
 		}
 		return size;
 	}
@@ -82,17 +78,10 @@ public:
 		return (void*)&element;
 	}
 
-	vector<unsigned char*> getHuffman(){
+	vector<unsigned char> getBlock(){
 		return element;
 	}
 
-	vector<int> getOriginalBytes(){
-		return original_bytes;
-	}
-
-	vector<int> getHuffmanBytes(){
-		return huffman_bytes;
-	}
 
 };
 

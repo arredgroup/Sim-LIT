@@ -45,9 +45,7 @@ public:
 	            for(int j = 0; j < w; j++){
 	                if((!matrix[i][j].isValid()) && amountNeighbors(img,i,j)>=neighbors) // si el bloque no es válido
 	                {
-	                    vector<int> add(amount_channels);
-		                for(int x=0;x<amount_channels;x++)
-		                	add[x]=0;
+	                    vector<int> add(amount_channels,0);
 		                count = 0;
 	                    /* cálculo del promedio de los canales de los vecinos */
 	                    for(int iBlock = max((int)i-1,0); iBlock <= min(i+1,h-1) ; iBlock++)   /**/
@@ -80,7 +78,7 @@ public:
 	            }
 	        }
 	        neighbors=maxNeighbors(img,h,w);
-	    }while(neighbors>=0 && isLossBlock(img));
+	    }while(neighbors>0 && isLossBlock(img));
 	    if(export_images){
 	    	string path = header->folder+"/image_received_restored.bmp";
             img->save(path.c_str());

@@ -12,7 +12,7 @@
 
 #include "../Images.h"
 #include "../Libs/huffman.c"
-#include "../DataByteStream.h"
+#include "../DataJpgStream.h"
 #include <cmath>
 
 #define JPGE_MAX(a,b) (((a)>(b))?(a):(b))
@@ -183,7 +183,7 @@ private:
 			vector < unsigned char*> compressed_block;
 			vector <int> bytes_huffman_block;
 			vector <int> bytes_original_block;
-			DataByteStream * compressed = (DataByteStream *)list->at(i);
+			DataJpgStream * compressed = (DataJpgStream *)list->at(i);
 			if(compressed!=NULL && compressed->isValid()){
 				compressed_block = compressed->getHuffman();
 				bytes_huffman_block = compressed->getHuffmanBytes();
@@ -820,7 +820,7 @@ private:
 	void generateDatabytestream(){
 		new_list.resize(compressed_blocks.size());
 		for (int f = 0; (unsigned)f < compressed_blocks.size(); f+=1){
-			DataByteStream* db = new DataByteStream(compressed_blocks[f],bytes_before_huffman[f],bytes_huffman[f]);
+			DataJpgStream* db = new DataJpgStream(compressed_blocks[f],bytes_before_huffman[f],bytes_huffman[f]);
 			new_list[f] = db;
 		}
 		bytes_huffman.clear();

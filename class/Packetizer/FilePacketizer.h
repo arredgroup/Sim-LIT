@@ -55,8 +55,6 @@ public:
 		int elements_by_pkg = floor(size / sizeElement);
 		nPkg = ceil(amount_elements / elements_by_pkg);
 		//nPkg = (sizeElement*amount_elements)/size; //Calcula la cantidad de paquetes
-		if((sizeElement*amount_elements)%size!=0)
-			nPkg+=1; 
 		vector<Package> pkgs;
 		for (int i = 0; i < nPkg; ++i)
 		{
