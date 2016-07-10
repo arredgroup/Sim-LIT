@@ -15,6 +15,7 @@
 #include "../class/ForwardProcessing/TurnerMixer.h"
 #include "../class/ForwardProcessing/DsjalMixer.h"
 #include "../class/ForwardProcessing/JpgCompressor.h"
+#include "../class/ForwardProcessing/TibsCompressor.h"
 #include "../class/ForwardProcessing/MixerFromFile/MixerFromFile.h"
 #include <string>
 #include <cstring>
@@ -43,6 +44,9 @@ static ForwardProcessing* create(string fp){
 	}
 	if(!fp.compare(JPG_COMPRESSOR)){
 		return new JpgCompressor();
+	}
+	if(!fp.compare(TIBS_COMPRESSOR)){
+		return new TibsCompressor();
 	}
 	return NULL;
 }

@@ -11,6 +11,8 @@
 #define CLASS_TIBSCOMPRESSOR
 
 #include "../Images.h"
+#include "../DataTibsStream.h"
+#include "../../structs.h"
 #include "TorusMixer.h"
 #include <cmath>
 
@@ -29,7 +31,10 @@ class TibsCompressor: public ForwardProcessing{
 	int image_width;
 	int image_height;
 	int channels;
+	HEAD hdr;
 	TorusMixer tm;
+
+	vector<bool> valids;
 
 public:
 
@@ -45,29 +50,37 @@ public:
 		image_width = (header->w*header->wb);
 		image_height = (header->h*header->hb);
 		channels = header->chnls;
+
+        hdr.w = ceil(image_width/2);
+		hdr.h = ceil(image_height/2);
+		hdr.hb = 1;
+		hdr.wb = 1;
+		hdr.chnls = channels;
+
 		readImage(list,header);
 		generateExtraPixels();
 		encode();
 		generateStream();
-		tm = new TorusMixer();
-		if(tm->make(&new_list, header, parameters, nParameters, show_data, export_image)!=0){
+		if(tm.make(&new_list, &hdr, parameters, nParameters, false, false)!=0){
 			cout << "(TiBS): Torus Can't be applied!! STOP!\n";
 			return 1;
 		}
 		*list = new_list;
 		proceed = true;
-		return 1;
+		return 0;
 	}
 
 	int unmake(vector<DataType *> *list, HEAD *header, bool show_data, bool export_image){
 		if(proceed){
-			if(tm->unmake(*list,header,show_data,export_image)!=0){
-			cout << "(TiBS): Torus Can't be undo!! STOP!\n";
-			return 1;
+			if(tm.unmake(list,&hdr,false,false)!=0){
+				cout << "(TiBS): Torus Can't be undo!! STOP!\n";
+				return 1;
 			}
 			readList(list);
 			decode();
 			clearExtraPixels();
+			generateImage();
+			*list = new_list;
 			return 0;
 		}
 		return 1;
@@ -76,15 +89,18 @@ public:
 private:
 
 	void readList(vector<DataType *> *list){
-		blocks.resize(round(image_height/2));
+		blocks.clear(); 
+		valids.resize(ceil(image_height/2)*ceil(image_width/2), false);
+		blocks.resize(ceil(image_height/2));
 		for (int i = 0; (unsigned)i < blocks.size(); i+=1){
-			blocks[i].resize(round(image_width/2));
+			blocks[i].resize(ceil(image_width/2));
 			for(int j = 0; (unsigned)j < blocks[i].size(); j+=1){
-				blocks[i][j].resize(channels);
+				DataTibsStream* aux = (DataTibsStream*)list->at(i*blocks.size()+j);
+				if(aux!=NULL && aux->isValid()){
+					blocks[i][j] = aux->getBlock();
+					valids[(i*blocks.size())+j] = true;
+				}
 			}
-		}
-		for (int i = 0; (unsigned)i < list->size(); i+=1){
-			
 		}
 	}
 
@@ -124,34 +140,30 @@ private:
 			for (int i = 0; (unsigned)i < image.size(); i+=1){
 				int j=image[i].size();
 				image[i].resize(j+1);
-				for(int pos = 0; pos<1; pos+=1){
-					vector <double> rgb;
-					for(int x =0; (unsigned)x < image[i][j-1].size();x+=1){
-						rgb.push_back(image[i][j-1][x]);
-					}
-					image[i][j+pos]=rgb;
+				vector <double> rgb;
+				for(int x =0; (unsigned)x < image[i][j-1].size();x+=1){
+					rgb.push_back(image[i][j-1][x]);
 				}
+				image[i][j+1]=rgb;
 			}
 		}
 		if((image_height%2)!=0){
 			int i=image.size();
 			image.resize(i+1);
-			for(int pos=0; pos < 1; pos+=1){
-				vector< vector <double>> aux;
-				for (int j = 0; (unsigned)j < image[i-1].size(); j+=1){
-					vector <double> rgb;
-					for(int x =0; (unsigned)x < image[i-1][j].size();x+=1){
-						rgb.push_back(image[i-1][j][x]);
-					}
-					aux.push_back(rgb);
+			vector< vector <double>> aux;
+			for (int j = 0; (unsigned)j < image[i-1].size(); j+=1){
+				vector <double> rgb;
+				for(int x =0; (unsigned)x < image[i-1][j].size();x+=1){
+					rgb.push_back(image[i-1][j][x]);
 				}
-				image[i+pos]=aux;
+				aux.push_back(rgb);
 			}
+			image[i+1]=aux;
 		}
 	}
 
 	void encode(){
-		int min_e, min_p, pos, e;
+		int min_e, min_p, pos, e, p;
 		unsigned char px_0, px_1, px_2,px_3, d_0, d_1, d_2;
 		blocks.resize(round(image_height/2));
 		for (int i = 0; (unsigned)i < blocks.size(); i+=1){
@@ -161,9 +173,9 @@ private:
 			}
 		}
 
-		for(int i=0; i < channels;i+=1){
-			for (int f = 0, x = 0; f < image_height; f+=2,x+=1){
-				for( int c = 0, y = 0;c < image_width; c+=2,y+=1){
+		for (int f = 0, x = 0; f < image_height; f+=2,x+=1){
+			for( int c = 0, y = 0;c < image_width; c+=2,y+=1){
+				for(int i=0; i < channels;i+=1){
 					px_0 = image[f][c][i];
 					px_1 = image[f][c+1][i];
 					px_2 = image[f+1][c][i];
@@ -226,81 +238,97 @@ private:
 
 					vector<unsigned char> block(3);
 					
-					if (position==0){
+					if (pos==0){
 					      WatermarkSet(px_1, px_2, px_3, 0);		// on marque la perte de px_0
 					      block[0]=px_1;
 					      block[1]=px_2;
 					      block[2]=px_3;
 					   }
-					if (position==1){
+					if (pos==1){
 					      WatermarkSet(px_0, px_2, px_3, 1);		// on marque la perte de px_1
 					      block[0]=px_0;
 					      block[1]=px_2;
 					      block[2]=px_3;
 					   }
-					if (position==2){
+					if (pos==2){
 					      WatermarkSet(px_0, px_1, px_3, 2);		// on marque la perte de px_2
 					      block[0]=px_0;
 					      block[1]=px_1;
 					      block[2]=px_3;
 					   }
-					if (position==3){
+					if (pos==3){
 					      WatermarkSet(px_0, px_1, px_2, 3);		// on marque la perte de px_3
 					      block[0]=px_0;
 					      block[1]=px_1;
 					      block[2]=px_2;
 					}
 					blocks[x][y][i]=block;
+					//cout << "[" << 	(double)blocks[x][y][i][0] << "," << (double)blocks[x][y][i][1] << "," << (double)blocks[x][y][i][2] << "] ";
+
 				}
 			}
 		}
 	}
 
 	void decode(){
+
 		image.clear();
-		image.resize(image_height);
+		image.resize(image_height+(image_height%2));
 		for (int i = 0; (unsigned)i < image.size(); i+=1){
-			image[i].resize(image_width);
+			image[i].resize(image_width+(image_width%2),vector<double>(channels));
 		}
-		int min_e, min_p, pos, e;
+		int pos;
 		unsigned char d_0, d_1, d_2;
 
-		for(int i=0; i < channels;i+=1){
-			for (int f = 0, x = 0; x < round(image_height/2); f+=2,x+=1){
-				for( int c = 0, y = 0; y < round(image_width/2); c+=2,y+=1){
-					d_0 = blocks[x][y][i][0];
-					d_1 = blocks[x][y][i][1];
-					d_2 = blocks[x][y][i][2];
-					pos = WatermarkGet(d_0, d_1, d_3);
+		for (int f = 0, x = 0; (unsigned)x < blocks.size(); f+=2,x+=1){
+			for( int c = 0, y = 0; (unsigned)y < blocks[x].size(); c+=2,y+=1){
+				if(valids[(x*blocks.size())+y] && blocks[x][y].size()==channels){
+					for(int i=0; i < channels;i+=1){
+						d_0 = blocks[x][y][i][0];
+						d_1 = blocks[x][y][i][1];
+						d_2 = blocks[x][y][i][2];
 
-				     // on décode sur le pixel de gauche
-				     // cas 1: perte de x0 (à remplacer par x1)
-				    if (pos == 0){
-					  image[f][c][i]=d_0;
-					  image[f][c+1][i]=d_0;
-					  image[f+1][c][i]=d_1;
-					  image[f+1][c+1][i]=d_3;
+						//cout << "[" << 	(double)blocks[x][y][i][0] << "," << (double)blocks[x][y][i][1] << "," << (double)blocks[x][y][i][2] << "] ";
+						pos = WatermarkGet(d_0, d_1, d_2);
+
+					     // on décode sur le pixel de gauche
+					     // cas 1: perte de x0 (à remplacer par x1)
+
+					    if (pos == 0){
+						  image[f][c][i]=d_0;
+						  image[f][c+1][i]=d_0;
+						  image[f+1][c][i]=d_1;
+						  image[f+1][c+1][i]=d_2;
+						}
+					     // cas 2: perte de x1 (à remplacer par x3)
+					    if (pos == 1){
+						  image[f][c][i]=d_0;
+						  image[f][c+1][i]=d_2;
+						  image[f+1][c][i]=d_1;
+						  image[f+1][c+1][i]=d_2;
+						}
+					     // cas 3: perte de x2 (à remplacer par x0)
+					    if (pos == 2){
+						  image[f][c][i]=d_0;
+						  image[f][c+1][i]=d_1;
+						  image[f+1][c][i]=d_0;
+						  image[f+1][c+1][i]=d_2;
+						}
+					     // cas 2: perte de x3 (à remplacer par x2)
+					    if (pos == 3){
+						  image[f][c][i]=d_0;
+						  image[f][c+1][i]=d_1;
+						  image[f+1][c][i]=d_2;
+						  image[f+1][c+1][i]=d_2;
+						}
 					}
-				     // cas 2: perte de x1 (à remplacer par x3)
-				    if (pos == 1){
-					  image[f][c][i]=d_0;
-					  image[f][c+1][i]=d_3;
-					  image[f+1][c][i]=d_1;
-					  image[f+1][c+1][i]=d_3;
-					}
-				     // cas 3: perte de x2 (à remplacer par x0)
-				    if (pos == 2){
-					  image[f][c][i]=d_0;
-					  image[f][c+1][i]=d_1;
-					  image[f+1][c][i]=d_0;
-					  image[f+1][c+1][i]=d_3;
-					}
-				     // cas 2: perte de x3 (à remplacer par x2)
-				    if (pos == 3){
-					  image[f][c][i]=d_0;
-					  image[f][c+1][i]=d_1;
-					  image[f+1][c][i]=d_3;
-					  image[f+1][c+1][i]=d_3;
+				}
+				else{
+					for(int i=0; i < channels;i+=1){
+					  	image[f][c][i]=-1;
+					  	image[f][c+1][i]=-1;
+					  	image[f+1][c][i]=-1;
+					  	image[f+1][c+1][i]=-1;
 					}
 				}
 			}
@@ -308,7 +336,7 @@ private:
 	}
 
 	unsigned char SetLSB(unsigned char val){
-	  val = val | 0x11;
+	  val = val | 0x01;
 	  return val;
 	}
 
@@ -318,7 +346,7 @@ private:
 	}
 
 	unsigned char GetLSB(unsigned char val){
-	  val = (val & 0x11);
+	  val = (val & 0x01);
 	  return val;
 	}
 /*
@@ -361,7 +389,7 @@ private:
 	}
 
 	void WatermarkSet(unsigned char &a, unsigned char &b, unsigned char &c, int position){
-	  unsigned char bit1, bit2, bit3, code;
+	  unsigned char code;
 	  
 	  code=(GetLSB(a) * 4) + (GetLSB(b) * 2) + GetLSB(c);
 
@@ -425,17 +453,39 @@ private:
 	void generateStream(){
 		for (int i = 0; i < blocks.size(); i+=1){
 			for (int j = 0; j < blocks[i].size(); j+=1){
-				DataTibsStream stream = new DataTibsStream(blocks[i][j]);
+				DataTibsStream* stream = new DataTibsStream(blocks[i][j]);
 				new_list.push_back(stream);
 			}
 		}
 	}
 
 	void clearExtraPixels(){
-		if(extra_w>0 || extra_h>0){
+		if((image_width%2)!=0 || (image_height%2)!=0){
 			image.resize(image_height);
 			for (int i = 0; (unsigned)i < image.size(); i+=1){
 				image[i].resize(image_width);
+			}
+		}
+	}
+
+	void generateImage(){
+		new_list.clear();
+		new_list.resize(image_width*image_height);
+		for (int i = 0, x = 0; (unsigned)i < image.size(); i+=1, x+=2){
+			for (int j = 0, y = 0; (unsigned)j < image[i].size(); j+=1, y+=2){
+				vector<int> channels;
+				int flag = 0;
+				for(int c = 0; (unsigned)c < image[i][j].size(); c+=1){
+					if((int)image[i][j][c]==-1)
+						flag = 1;
+					channels.push_back((int)image[i][j][c]);
+				}
+				DataBlock* block=NULL;
+				if(flag!=1)
+					 block = new DataBlock(image[i][j].size(),channels,1,1);
+				else
+					block = new DataBlock();
+				new_list[(i*image_width)+j]=block;
 			}
 		}
 	}

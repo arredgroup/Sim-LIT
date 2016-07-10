@@ -122,7 +122,8 @@ using namespace std;
 			}
 		}
 		Images received(pkgs_rcved,&header,show_data);
-
+		if(export_images)
+			received.save((header.folder + "/image_received_before_restored.bmp").c_str());
 		rbd->hidden(&received,show_data,export_images,&header);
 		for (int i = 0; (unsigned)i < metrics.size(); i=i+1)
 		{

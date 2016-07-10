@@ -14,6 +14,7 @@
 	#define DSJAL_MIX "dsjal-mixer"
 	#define FILE_MIX "file-mixer"
 	#define JPG_COMPRESSOR "jpg-compressor"
+	#define TIBS_COMPRESSOR "tibs-compressor"
 
 #define PACKETIZER_METHOD "-packetizer-method"
 	#define NORMAL_PACKETIZER "normal-packetizer" 

@@ -78,7 +78,7 @@ public:
 		return (void*)&element;
 	}
 
-	vector<unsigned char> getBlock(){
+	vector<vector<unsigned char>> getBlock(){
 		return element;
 	}
 
