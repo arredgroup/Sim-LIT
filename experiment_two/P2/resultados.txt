@@ -1,5 +1,0 @@
-Image Name                         % Pkg-Lost     % Block-Lost   Metric         
-  src/1.bmp                          20.3125        20.3125        PSNR: 24.716697
-  src/1.bmp                          20.3125        20.3125        PSNR: 24.716697
-  src/1.bmp                          20.3125        20.3125        PSNR: 24.716697
-  
