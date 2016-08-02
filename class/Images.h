@@ -302,6 +302,14 @@ public:
 	    delete [] matrix;
 	}
 
+	void print(){
+		cout << "Image-Width: " << w << "\n";
+		cout << "Image-Height: " << h << "\n";
+		cout << "- Block-Width: " << wblock << "\n";
+		cout << "- Block-Height: " << hblock << "\n";
+		cout << "- Channels: " << type << "\n";
+	}
+
 private:
 	vector<Pixel> getPixelPerBlock(CImg<> img, int x, int y){
 	/*

@@ -91,16 +91,16 @@ using namespace std;
 		else{
 			pkgs = pktz->imgToPackageList(list,package_size,show_data);
 		}
-		npkgo = pkgs.size();
-		nepkgo = pktz->getSizeElements();
+		npkgo = pkgs.size(); //Número de Paquetes generados
+		nepkgo = pktz->getSizeElements(); //Número de elementos paquetizados
 		vector<Package> rcved = chnl->simulate(pkgs);
-		npkgf = rcved.size();
+		npkgf = rcved.size(); //Número de Paquetes recibidos
 		if(rcved.size()==0){
 			cout << "Not exists packages received, end \n";
 			return 0;
 		}
 		vector<DataType *> pkgs_rcved = pktz->packageListToImg(rcved,show_data,&header);
-		nepkgf = pktz->getSizeElements();
+		nepkgf = pktz->getSizeElements(); //Número de elementos recibidos
 /*
 		if(export_images){
             Images aux(data,header,show_data);
@@ -110,6 +110,7 @@ using namespace std;
         }
 */
 		if(export_files){
+			cout << "NPG: " << npkgo << " NPR: " << npkgf << "\nNEP: " << nepkgo << " NER: " << nepkgf << "\n";
 			print_file(&file, 100-((npkgf*100)/npkgo),15);
 			print_file(&file, 100-((nepkgf*100)/nepkgo),15);
 		}

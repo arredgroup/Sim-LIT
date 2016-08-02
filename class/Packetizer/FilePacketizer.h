@@ -52,11 +52,11 @@ public:
 		amount_elements = list.size();
 		if(amount_elements>0)
 			sizeElement=list.at(0)->getSize();
-		int elements_by_pkg = floor(size / sizeElement);
-		nPkg = ceil(amount_elements / elements_by_pkg);
+		double elements_by_pkg = floor(size / sizeElement);
+		nPkg = ceil((double) amount_elements / elements_by_pkg);
 		//nPkg = (sizeElement*amount_elements)/size; //Calcula la cantidad de paquetes
 		vector<Package> pkgs;
-		for (int i = 0; i < nPkg; ++i)
+		for (int i = 0; i < nPkg; i+=1)
 		{
 			Package* aux = new Package();
 			pkgs.push_back(*aux);
@@ -64,7 +64,7 @@ public:
 		do{
 			read.open(path.c_str());
 		}while(!read.is_open());
-		for (int i = 0; i < amount_elements && !read.eof(); i++)
+		for (int i = 0; i < amount_elements && !read.eof(); i+=1)
 		{
 			string line;
 			getline(read, line);
