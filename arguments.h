@@ -15,6 +15,7 @@
 	#define FILE_MIX "file-mixer"
 	#define JPG_COMPRESSOR "jpg-compressor"
 	#define TIBS_COMPRESSOR "tibs-compressor"
+	#define AHCR_COMPRESSOR "ahcr-compressor"
 
 #define PACKETIZER_METHOD "-packetizer-method"
 	#define NORMAL_PACKETIZER "normal-packetizer" 
@@ -29,6 +30,12 @@
 	#define AVERAGE_PIXEL_RBD "rebuilder-average-pixel"
 	#define AVERAGE_OPT_RBD "rebuilder-average-opt"
 	#define AVERAGE_RAMANBABU2001 "rebuilder-ramanbabu2001"
+	#define AVERAGE_CDD "rebuilder-cdd"
+    #define AVERAGE_BILI "rebuilder-bili"
+    #define AVERAGE_BILIPONDE "rebuilder-biliponde"
+    #define AVERAGE_BILIPONDE2 "rebuilder-msr"
+    #define AVERAGE_TVBLOCK "rebuilder-tvblock"
+    #define AVERAGE_BIC "rebuilder-bic"
 
 #define METRIC "-metric"
    #define METRIC_PSNR "metric-psnr"

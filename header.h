@@ -14,6 +14,8 @@
 #include "class/ForwardProcessing/TurnerMixer.h"
 #include "class/ForwardProcessing/DsjalMixer.h"
 #include "class/ForwardProcessing/JpgCompressor.h"
+#include "class/ForwardProcessing/TibsCompressor.h"
+#include "class/ForwardProcessing/AhcrCompressor.h"
 #include "class/ForwardProcessing/MixerFromFile/MixerFromFile.h"
 
 #include "class/Package.h"

@@ -80,9 +80,9 @@ public:
             return 1;
         }
 
-		image_width = (header->w*header->wb);
-		image_height = (header->h*header->hb);
-
+		image_width = (header->w);
+		image_height = (header->h);
+		//cout << "W:" << image_width << "\nH: " << image_height << "\n";
 		jpg_width = image_width/8;
 		jpg_height = image_height/8;
 		if(image_width%8!=0)
@@ -90,7 +90,11 @@ public:
 		if(image_height%8!=0)
 			jpg_height+=1;
 		extra_w = image_width%8;
+		if(extra_w==8)
+			extra_w=0;
 		extra_h = image_height%8;
+		if(extra_h==8)
+			extra_h=0;
 
 		readImage(list, header);
 		generateExtraPixels(); //Crea los bloques de 8x8
@@ -125,8 +129,11 @@ public:
 			generateImage();
 			*list = new_list;
 			proceed = false;
+			header->wb = 1;
+			header->hb = 1;
 		    if(show_data)
 				cout << "JPEG Compression undo to Image\n";
+			//getchar();
 			return 0;
 		}
 		return 1;
@@ -482,9 +489,9 @@ private:
 		int h_block = 0;
 		int chnl_block = 0;
 		int pos = 0;
-		for (int i = 0; i < header->h; i+=1){
-			for (int j = 0; j < header->w; j+=1){
-				pos = (i*(header->h))+j;
+		for (int i = 0; i < header->h/header->hb; i+=1){
+			for (int j = 0; j < header->w/header->wb; j+=1){
+				pos = (i*(header->h/header->hb))+j;
 				int* head_block = list->at(pos)->getContent();
 				h_block = head_block[1];
 				w_block = head_block[2];

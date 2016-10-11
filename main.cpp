@@ -109,8 +109,10 @@ using namespace std;
         	aux.destroy();
         }
 */
-		if(export_files){
+		if(show_data){
 			cout << "NPG: " << npkgo << " NPR: " << npkgf << "\nNEP: " << nepkgo << " NER: " << nepkgf << "\n";
+		}
+		if(export_files){
 			print_file(&file, 100-((npkgf*100)/npkgo),15);
 			print_file(&file, 100-((nepkgf*100)/nepkgo),15);
 		}

@@ -48,7 +48,7 @@ public:
 	    	{
 	    		DataBlock org_e = org_m[i][j];
 	    		DataBlock rcv_e = rcv_m[i][j];
-	    		del = org_e.getIntensity() - rcv_e.getIntensity();
+	    		del = abs(org_e.getIntensity() - rcv_e.getIntensity());
 	        	mse = mse + (double)pow(del, 2);
 	        }
 	    }

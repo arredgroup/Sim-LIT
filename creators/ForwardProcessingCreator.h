@@ -16,6 +16,7 @@
 #include "../class/ForwardProcessing/DsjalMixer.h"
 #include "../class/ForwardProcessing/JpgCompressor.h"
 #include "../class/ForwardProcessing/TibsCompressor.h"
+#include "../class/ForwardProcessing/AhcrCompressor.h"
 #include "../class/ForwardProcessing/MixerFromFile/MixerFromFile.h"
 #include <string>
 #include <cstring>
@@ -47,6 +48,9 @@ static ForwardProcessing* create(string fp){
 	}
 	if(!fp.compare(TIBS_COMPRESSOR)){
 		return new TibsCompressor();
+	}
+	if(!fp.compare(AHCR_COMPRESSOR)){
+		return new AhcrCompressor();
 	}
 	return NULL;
 }

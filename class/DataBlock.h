@@ -117,7 +117,7 @@ public:
 	* return local_max
 	*/
 	     int local_max = 0;
-	     for (int i = 0; i < (width*height); ++i)
+	     for (int i = 0; i < (width*height); i+=1)
 	     {
 	     	local_max = local_max + block[i].getIntensity();	     
 	     }
